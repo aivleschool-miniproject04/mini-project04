@@ -125,7 +125,7 @@ export const Layout = ({ children, onNavigate }) => {
             {new Date().getFullYear()} 작가의 산책 - AI 트랙 미니프로젝트 4차. All Rights Reserved.
           </Typography>
           <Typography variant="caption" align="center" display="block" sx={{ mt: 0.5, color: '#687b99' }}>
-            Powered by React, Material UI, and OpenAI DALL-E
+            Powered by React, Material UI, and OpenAI GPT Image
           </Typography>
         </Container>
       </Box>

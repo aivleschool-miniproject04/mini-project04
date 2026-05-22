@@ -20,7 +20,7 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
    * [React 핵심 개념: 이미지 생성 파라미터 상태 관리]
    * - apiKey: 사용자가 입력한 OpenAI API 인증 키
    * - showApiKey: 패스워드 마스킹(***) 처리 토글 플래그
-   * - model: 교안에서 사용하는 gpt-image-2 또는 dall-e-3 모델
+   * - model: 교안에서 사용하는 gpt-image-2 또는 gpt-image-3 모델
    * - size: 이미지 크기 (1024x1536 세로형 권장)
    * - quality: 이미지 해상도/품질 수준
    * - outputFormat: 변환할 포맷 확장자
@@ -42,7 +42,7 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
    * - localStorage.getItem('openai_api_key'): 매번 API Key를 입력해야 하는 불편함을 덜어주기 위해 
    *   브라우저의 로컬 저장소에 안전하게 키를 임시 보관해두고 로딩 시 채워줍니다.
    * - 프롬프트 템플릿 조립: 도서의 제목(book.title), 작가(book.author), 본문내용(book.content)을 조합하여
-   *   OpenAI DALL-E 모델이 가장 이해하기 쉬운 상세한 영어 텍스트 템플릿(Backtick 활용)으로 조립하여 prompt state에 세팅합니다.
+   *   OpenAI GPT Image 모델이 가장 이해하기 쉬운 상세한 영어 텍스트 템플릿(Backtick 활용)으로 조립하여 prompt state에 세팅합니다.
    */
   useEffect(() => {
     if (open && book) {
@@ -80,7 +80,7 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
        * [OpenAI 이미지 생성 API 연동]
        * - endpoint: POST https://api.openai.com/v1/images/generations
        * - headers: Bearer <ApiKey>로 인증
-       * - body: DALL-E가 요구하는 파라미터 규격(JSON 포맷)
+       * - body: GPT Image가 요구하는 파라미터 규격(JSON 포맷)
        *         * response_format: 'b64_json' -> 생성된 이미지를 파일 URL이 아닌 Base64 인코딩 텍스트 원본으로 반환받아 
        *           우리의 local db.json에 직접 파일 통째로 저장(Data URL 패턴)할 수 있게 해줍니다.
        */
@@ -231,8 +231,8 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
                 onChange={(e) => setModel(e.target.value)}
               >
                 <MenuItem value="gpt-image-2">gpt-image-2 (교안 표준)</MenuItem>
-                <MenuItem value="dall-e-3">dall-e-3 (DALL-E 최신)</MenuItem>
-                <MenuItem value="dall-e-2">dall-e-2 (클래식)</MenuItem>
+                <MenuItem value="dall-e-3">dall-e-3 (GPT Image 최신)</MenuItem>
+                <MenuItem value="dall-e-2">dall-e-2 (GPT Image 클래식)</MenuItem>
               </Select>
             </FormControl>
 

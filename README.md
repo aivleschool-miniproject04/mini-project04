@@ -70,7 +70,7 @@
 * **AI 표지 생성 모달 개발 ([AICoverModal.jsx](file:///c:/Users/User/Desktop/my-app/src/components/AICoverModal.jsx))**:
   * 상세조회 화면에서 바로 띄울 수 있는 팝업 다이얼로그 모달을 개발했습니다.
   * 보안을 위해 OpenAI API Key 입력창은 패스워드 마스크 처리 및 가시성 토글(눈 아이콘) 기능을 탑재했으며, 사용자 편의를 위해 `localStorage`에 안전하게 키값을 자동 기억하도록 세팅했습니다.
-  * 모델 규격(gpt-image-2, dall-e-3 등), 생성 비율(1024x1536 세로 권장형, 1024x1024 정사각형), 품질(Low, Medium, High) 및 출력 이미지 확장자(PNG, JPEG, WEBP)를 조율할 수 있는 정밀 옵션 선택 드롭다운 UI를 적용했습니다.
+  * 모델 규격(gpt-image-2(dall-e-2), gpt-image-3(dall-e-3) 등), 생성 비율(1024x1536 세로 권장형, 1024x1024 정사각형), 품질(Low, Medium, High) 및 출력 이미지 확장자(PNG, JPEG, WEBP)를 조율할 수 있는 정밀 옵션 선택 드롭다운 UI를 적용했습니다.
 * **프롬프트 템플릿 설계 및 API 연동**:
   * 도서 상세 본문 정보에 기입된 핵심 텍스트를 파싱하여 기본 프롬프트(`A beautiful artistic book cover for a book titled...`)가 자동 충전되도록 뼈대를 작성했습니다. 사용자가 원하면 직접 편집할 수 있습니다.
   * API 호출 시 Base64 포맷(`response_format: 'b64_json'`) 지정을 통해 결과 이미지를 받아와 React가 해석할 수 있는 Data URL 데이터 포맷(`data:image/png;base64,...`)으로 정밀 가공 변환했습니다.

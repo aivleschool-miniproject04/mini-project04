@@ -172,7 +172,7 @@ export const BookDetail = ({ book, onNavigate, onDelete, onCoverUpdated }) => {
 
             {/* 도서 상세 기능 버튼 목록 */}
             <Box sx={{ width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {/* OpenAI DALL-E 기반 이미지 생성 모달 호출 버튼 */}
+              {/* OpenAI GPT Image 기반 이미지 생성 모달 호출 버튼 */}
               <Button
                 variant="contained"
                 startIcon={<AutoFixHighIcon />}
