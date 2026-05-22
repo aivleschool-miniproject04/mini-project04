@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from "react";
+import { useEffect } from "react";
 import StartPage from "./pages/StartPage";
 import BookList from "./pages/BookList";
 import BookDetail from "./pages/BookDetail";
@@ -9,38 +10,63 @@ import './App.css'
 
 function App() {
   const [page, setPage] = useState("start");
-  const [selectedBook, setSelectedBook] = useState(null);
   const [books, setBooks] = useState([]);
-  const [error, setError] = useState(null);
+  const [selectedBook, setSelectedBook] = useState(null);
+
+  const moveToList = () => {
+    setPage("list");
+  };
+
+  const moveToCreate = () => {
+    setPage("create");
+  };
+
+  const moveToDetail = (book) => {
+    setSelectedBook(book);
+    setPage("detail");
+  };
+
+  const moveToUpdate = (book) => {
+    setSelectedBook(book);
+    setPage("update");
+  };
+
+  const moveToCoverUpdate = (book) => {
+    setSelectedBook(book);
+    setPage("coverUpdate");
+  };
 
   useEffect(() => {
-  async function  loadBooks() {
+    async function loadBooks() {
       try {
-        const res = await fetch('http://localhost:3000/books');
-        const data = await res.json();
+        const response = await fetch("http://localhost:3000/books");
+        const data = await response.json();
         setBooks(data);
-      } catch(err) {
-        console.error(err);
-        setError('도서 정보를 불러올 수 없습니다.');
+        console.log("책 데이터: ", data);
+      } catch (error) {
+        console.error("에러: ", error);
       }
-    }
+    };
     loadBooks();
   }, []);
 
-  const handleNewBook = async (book) => {
+  const handleAddBook = async (newBook) => {
     try {
-      const res = await fetch('http://localhost:3000/newBook/' + book.id, {
-        method: 'POST',
-        headers: { 'Content_Type': 'application/json' },
-        body: JSON.stringify(book)
+      const response = await fetch("http://localhost:3000/books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newBook),
       });
-      const saved = await res.json();
-      setBooks([saved, ...books]);
-    } catch (err) {
-      console.error(err);
+      const createdBook = await response.json();
+      setBooks([...books, createdBook]);
+    } catch (error) {
+      console.error("에러: ", error);
     }
   };
 
+  
   const handleBookDelete = async (id) => {
     try {
       await fetch('http://localhost:3000/bookDelete/' + id, {
@@ -67,31 +93,6 @@ function App() {
     }
   };
 
-  const moveToList = () => {
-    setPage("list");
-  };
-
-  const moveToCreate = () => {
-    setPage("create");
-  };
-
-  const moveToDetail = (book) => {
-    setSelectedBook(book);
-    setPage("detail");
-  };
-
-  const moveToUpdate = (book) => {
-    setSelectedBook(book);
-    setPage("update");
-  };
-
-  const moveToCoverUpdate = (book) => {
-    setSelectedBook(book);
-    setPage("coverUpdate");
-  };
-
-
-
   return (
     <>
       {page === "start" && (
@@ -103,6 +104,7 @@ function App() {
 
       {page === "list" && (
         <BookList
+          books={books}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
         />
@@ -117,11 +119,11 @@ function App() {
         />
       )}
 
-      {page === "create" && <BookCreate onMoveToList={moveToList} />}
+      {page === "create" && <BookCreate onAddBook={handleAddBook} onMoveToList={moveToList} />}
 
       {page === "update" && (
         <BookUpdate
-          book={selectedBook}
+          selectedBook={selectedBook}
           onMoveToDetail={moveToDetail}
           onMoveToList={moveToList}
         />
