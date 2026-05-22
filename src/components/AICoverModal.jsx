@@ -80,8 +80,8 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
        * - endpoint: POST https://api.openai.com/v1/images/generations
        * - headers: Bearer <ApiKey>로 인증
        * - body: GPT Image가 요구하는 파라미터 규격(JSON 포맷)
-       *         * response_format: 'b64_json' -> 생성된 이미지를 파일 URL이 아닌 Base64 인코딩 텍스트 원본으로 반환받아 
-       *           우리의 local db.json에 직접 파일 통째로 저장(Data URL 패턴)할 수 있게 해줍니다.
+       *         * output_format: 선택한 포맷 (png/jpeg/webp) -> 교안의 API 프록시 서버 스펙에 맞춤.
+       *           생성된 이미지는 b64_json 형식으로 응답받아 local db.json에 직접 저장합니다.
        */
       const response = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
@@ -95,7 +95,7 @@ export const AICoverModal = ({ open, book, onClose, onCoverGenerated }) => {
           n: 1,
           size: size,
           quality: quality,
-          response_format: 'b64_json' // base64로 가져오기 위한 핵심 속성
+          output_format: outputFormat
         })
       });
 
