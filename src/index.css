@@ -1,43 +1,77 @@
+/* 
+ * [교안 Chapter 1. HTML & CSS 기초]
+ * - 외부 Google Fonts(Inter, Outfit, Noto Sans KR)를 웹폰트로 로드하여 타이포그래피 품질을 개선했습니다.
+ * - 전역 레이아웃 초기화, 박스 모델(box-sizing: border-box), 그리고 스무스한 트랜지션용 fadeIn 애니메이션을 정의했습니다.
+ */
+
+/* 
+ * [CSS 핵심 개념: @import 문법]
+ * - 외부 웹서버로부터 웹폰트 스타일시트 리소스를 가져옵니다. 
+ * - 영문 타이포그래피의 가독성을 위한 'Outfit'과 'Inter', 한글 폰트를 위한 'Noto Sans KR'을 멀티 로드합니다.
+ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
 html, body {
   margin: 0;
   padding: 0;
+  
+  /**
+   * [CSS 핵심 개념: box-sizing: border-box]
+   * - HTML 기본 박스 모델은 요소의 가로(width)를 지정한 뒤 padding이나 border를 주면 실제 크기가 계속 커집니다.
+   * - 'border-box'를 선언하면 padding과 border가 요소의 가로(width) 범위 안으로 흡수되므로, 
+   *   레이아웃의 크기 계산이 직관적이고 쉬워져 웹 표준 코딩에서 필수적으로 사용하는 선언입니다.
+   */
   box-sizing: border-box;
+  
+  /* 다국어 글꼴 적용 우선순위 (Fallback Font 구성) */
   font-family: 'Outfit', 'Inter', 'Noto Sans KR', sans-serif;
   background-color: #f7f9fc;
+  
+  /* [CSS 고급 기법: 폰트 렌더링 안티앨리어싱]
+     - 브라우저별 글씨가 거칠게 표현되는 것을 억제하고 모바일 및 고해상도 모니터에서 글꼴이 미려하게 그려지도록 처리합니다. */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 상속 설정을 통해 모든 하위 요소와 가상 엘리먼트(::before, ::after)까지 border-box를 통일시킵니다. */
 *, *::before, *::after {
   box-sizing: inherit;
 }
 
+/* <a> 태그의 밑줄을 지우고 글자 색상을 부모 색상을 따르게 만듭니다. */
 a {
   text-decoration: none;
   color: inherit;
 }
 
-/* Custom premium scrollbar styling */
+/**
+ * [CSS 가상 클래스(Pseudo-element)를 이용한 웹킷 브라우저 스크롤바 디자인]
+ * - 브라우저의 투박한 기본 스크롤바 대신 세련된 스크롤바를 렌더링하여 통일된 디자인 정체성을 만듭니다.
+ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 8px; /* 스크롤바 세로 너비 */
+  height: 8px; /* 가로 스크롤바 높이 */
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9; 
+  background: #f1f5f9; /* 스크롤 트랙 배경 */
 }
  
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; 
-  border-radius: 4px;
+  background: #cbd5e1; /* 스크롤 이동 바 색상 */
+  border-radius: 4px; /* 바 모서리 둥글게 */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; 
+  background: #94a3b8; /* 마우스 호버 시 조금 더 짙은 색으로 반전 */
 }
 
+/**
+ * [CSS3 Animation: @keyframes와 transform]
+ * - fadeIn 이라는 이름을 가진 트랜지션 애니메이션 효과를 설계합니다.
+ * - opacity(투명도) 0에서 1로 변하고, transform: translateY(8px)를 적용해 아래에서 위로 8px 상승하면서 
+ *   부드럽게 페이드인되는 시각적인 '마이크로 인터랙션'을 제공합니다.
+ */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -48,3 +82,4 @@ a {
     transform: translateY(0);
   }
 }
+
