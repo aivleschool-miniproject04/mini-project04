@@ -1,39 +1,64 @@
 import Header from "../components/Header";
 import BookCard from "../components/BookCard";
-import { mockBooks } from "../data/mockBooks";
 
-function BookList({ onMoveToDetail, onMoveToCreate }) {
+function BookList({
+  books,
+  search,
+  onSearch,
+  onMoveToStart,
+  onMoveToList,
+  onMoveToDetail,
+  onMoveToCreate,
+}) {
   return (
-    <div>
-      <Header />
+    <>
+      <Header
+        onMoveToStart={onMoveToStart}
+        onMoveToList={onMoveToList}
+        onMoveToCreate={onMoveToCreate}
+      />
 
       <main className="book-list-page">
-        <div className="page-title-row">
-        <h2>도서 목록</h2>
+        <section className="section-card">
+          <div className="page-title-row">
+            <h2>도서 목록</h2>
 
-        <div className="list-actions">
-            <div className="search-box">
-            <input type="text" placeholder="제목을 입력해주세요." />
-            <button>검색</button>
+            <div className="list-actions">
+              <div className="search-box">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => onSearch(e.target.value)}
+                  placeholder="도서명, 저자, 내용 검색"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="create-button"
+                onClick={onMoveToCreate}
+              >
+                새 도서 등록
+              </button>
             </div>
+          </div>
 
-            <button className="create-button" onClick={onMoveToCreate}>
-            신규 도서 등록
-            </button>
-        </div>
-        </div>
-
-        <section className="book-grid">
-          {mockBooks.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              onClick={() => onMoveToDetail(book)}
-            />
-          ))}
+          {books.length > 0 ? (
+            <div className="book-grid">
+              {books.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  onClick={() => onMoveToDetail(book)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">검색 결과에 맞는 도서가 없습니다.</div>
+          )}
         </section>
       </main>
-    </div>
+    </>
   );
 }
 
