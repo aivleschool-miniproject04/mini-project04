@@ -66,15 +66,15 @@ function App() {
     }
   };
 
-  
+
   const handleBookDelete = async (id) => {
     try {
       await fetch('http://localhost:3000/books/' + id, {
         method: 'DELETE',
       });
       setBooks(books.filter(b => b.id !== id));
-      
-    } catch(eff) {
+
+    } catch (eff) {
       console.error(err);
     }
   };
@@ -84,11 +84,12 @@ function App() {
       const book = books.find(b => b.id === updatedBook.id);
       const res = await fetch('http://localhost:3000/books/' + updatedBook.id, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json'},
-        body: JSON.stringify({ content: updatedBook.content/* 필요시 update할 컬럼을 더 작성 */})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedBook)
       });
       const updated = await res.json();
-      setBooks(books.map(b => b.id === updatedBook.id ? updated : b))
+      setBooks(books.map(b => b.id === updatedBook.id ? updated : b));
+      moveToDetail(updated);
     } catch (err) {
       console.error(err);
     }
@@ -118,6 +119,7 @@ function App() {
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
           onBookDelete={handleBookDelete}
+          onBookUpdate={handleBookUpdate}
         />
       )}
 
@@ -125,7 +127,8 @@ function App() {
 
       {page === "update" && (
         <BookUpdate
-          selectedBook={selectedBook}
+          book={selectedBook}
+          onBookUpdate={handleBookUpdate}
           onMoveToDetail={moveToDetail}
           onMoveToList={moveToList}
         />

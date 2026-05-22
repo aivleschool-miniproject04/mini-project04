@@ -1,16 +1,29 @@
 import { useState } from "react";
+import { useEffect } from "react";
 
-function BookForm({ onAddBook, onCancel }) {
+function BookForm({ book, onSubmit, onCancel, submitText }) {
 
   const [formData, setFormData] = useState({
-    title: "",
-    author: "",
-    publisher: "",
-    content: "",
+    title: book?.title || "",
+    author: book?.author || "",
+    publisher: book?.publisher || "",
+    content: book?.content || "",
   });
+
+  useEffect(() => {
+    if (book) {
+      setFormData({
+        title: book.title,
+        author: book.author,
+        publisher: book.publisher,
+        content: book.content,
+      });
+    }
+  }, [book]);
 
 
   const handleChange = (e) => {
+    e.preventDefault()
     const { name, value } = e.target;
 
     setFormData({
@@ -49,10 +62,15 @@ function BookForm({ onAddBook, onCancel }) {
       created: new Date().toLocaleString(),
       updated: new Date().toLocaleString()
     };
+    if (book) {
+      newBook.id = book.id;
+      alert("수정 되었습니다.");
 
-    alert("등록 되었습니다.");
+    } else {
+      alert("등록 되었습니다.");
+    }
+    onSubmit(newBook);
 
-    onAddBook(newBook);
     setFormData({
       title: "",
       author: "",
@@ -108,7 +126,7 @@ function BookForm({ onAddBook, onCancel }) {
       </div>
 
       <div className="form-buttons">
-        <button type="submit">등록하기</button>
+        <button type="submit">{submitText}</button>
         <button type="button" onClick={onCancel}>
           취소
         </button>

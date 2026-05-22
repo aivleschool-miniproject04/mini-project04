@@ -12,8 +12,9 @@ function BookCreate({ onAddBook, onMoveToList }) {
         <h2>신규 도서 등록</h2>
 
         <BookForm
-          onAddBook={onAddBook}
+          onSubmit={onAddBook}
           onCancel={onMoveToList}
+          submitText="수정하기"
         />
       </main>
     </div>

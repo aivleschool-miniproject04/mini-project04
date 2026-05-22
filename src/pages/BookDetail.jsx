@@ -1,6 +1,7 @@
 import Header from "../components/Header";
+import BookUpdate from "./BookUpdate";
 
-function BookDetail({ book, onMoveToList, onMoveToUpdate, onMoveToCoverUpdate, onBookDelete }) {
+function BookDetail({ book, onMoveToList, onMoveToUpdate, onMoveToCoverUpdate, onBookDelete, onBookUpdate }) {
 
   const handleDelete = (id) => {
     if (!window.confirm(`${book.title}을(를) 정말 삭제하시겠습니까?`)) {
@@ -54,7 +55,7 @@ function BookDetail({ book, onMoveToList, onMoveToUpdate, onMoveToCoverUpdate, o
 
             <div className="detail-buttons">
               <button onClick={() => onMoveToCoverUpdate(book)}>표지 시안 생성</button>
-              <button onClick={() => onMoveToUpdate(book)}>수정하기</button>              
+              <button onClick={() => onMoveToUpdate(book)}>수정하기</button>
               <button onClick={() => handleDelete(book.id)}>삭제</button>
               <button onClick={onMoveToList}>목록으로</button>
             </div>
