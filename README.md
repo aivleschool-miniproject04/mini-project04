@@ -20,10 +20,15 @@ sequenceDiagram
     %% 1. 도서 CRUD 흐름
     rect rgb(240, 248, 255)
         note right of User: [도서 관리 흐름]
-        User->>UI: 도서 등록 / 정보 수정 입력
-        UI->>Server: POST /newBook 또는 PATCH /update/:id
-        Server-->>UI: db.json 반영 및 결과 응답
-        UI-->>User: 화면에 도서 목록 및 상세 정보 노출
+        User->>UI: 도서 등록 / 정보 수정 입력 / 삭제 요청
+        alt 등록 및 수정
+            UI->>Server: POST /newBook 또는 PATCH /update/:id
+            Server-->>UI: db.json 반영 및 결과 응답
+        else 삭제
+            UI->>Server: DELETE /bookDelete/:id
+            Server-->>UI: db.json 삭제 반영 및 결과 응답
+        end
+        UI-->>User: 화면 갱신 (목록 / 상세화면 반영)
     end
 
     %% 2. AI 표지 생성 흐름
