@@ -3,6 +3,7 @@ import BookCard from "../components/BookCard";
 
 function BookList({
   books,
+  popularBooks,
   search,
   onSearch,
   onMoveToStart,
@@ -45,6 +46,24 @@ function BookList({
               </button>
             </div>
           </div>
+          <section className="book-section">
+            <h3>인기 도서</h3>
+
+              {popularBooks?.length > 0 ? (
+                <div className="book-grid">
+                  {popularBooks.slice(0, 3).map((book) => (
+                    <BookCard
+                      key={book.id}
+                      book={book}
+                      onClick={() => onMoveToDetail(book)}
+                    />
+                  ))}
+                </div>
+            ) : (
+              <div className="empty-state">아직 인기 도서가 없습니다.
+              </div>
+            )}
+            </section>
 
           {books.length > 0 ? (
             <div className="book-grid">
