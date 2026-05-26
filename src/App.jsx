@@ -93,6 +93,7 @@ function App() {
     const newBook = {
       ...formData,
       coverImageUrl: "",
+      likeCount: 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -178,6 +179,41 @@ function App() {
     } catch (error) {
       console.error(error);
       setMessage("도서 삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleLikeBook = async (book) => {
+    const currentLikeCount = book.likeCount || 0;
+    const updatedBook = {
+      ...book,
+      likeCount: currentLikeCount + 1,
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          likeCount: updatedBook.likeCount,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("도서 추천 실패");
+      }
+
+      const savedBook = await res.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+      );
+      setSelectedId(savedBook.id);
+      setMessage("도서를 추천했습니다.");
+    } catch (error) {
+      console.error(error);
+      setMessage("도서 추천 중 오류가 발생했습니다.");
     }
   };
 
@@ -290,6 +326,7 @@ function App() {
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
           onDelete={handleDeleteBook}
+          onLike={handleLikeBook}
         />
       )}
 
