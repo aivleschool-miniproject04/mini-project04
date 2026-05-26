@@ -4,11 +4,11 @@ import BookDetail from "./pages/BookDetail";
 import BookCreate from "./pages/BookCreate";
 import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
-
+import StartPage from "./pages/StartPage";
 const API_URL = "http://localhost:3000/books";
 
 function App() {
-  const [page, setPage] = useState("list");
+  const [page, setPage] = useState("start");
   const [books, setBooks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [search, setSearch] = useState("");
@@ -17,7 +17,7 @@ function App() {
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
-    [books, selectedId]
+    [books, selectedId],
   );
 
   const filteredBooks = useMemo(() => {
@@ -49,6 +49,32 @@ function App() {
     });
   }, [books, search]);
 
+  const newBooks = useMemo(() => {
+    return [...books]
+      .sort((a, b) => {
+        const dateA = a.createdAt || "";
+        const dateB = b.createdAt || "";
+        if (dateA !== dateB) {
+          return dateB.localeCompare(dateA);
+        }
+        return b.id - a.id;
+      })
+      .slice(0, 3);
+  }, [books]);
+
+  const popularBooks = useMemo(() => {
+    return [...books]
+      .sort((a, b) => {
+        const likeA = a.likeCount || 0;
+        const likeB = b.likeCount || 0;
+        if (likeA !== likeB) {
+          return likeB - likeA;
+        }
+        return b.id - a.id;
+      })
+      .slice(0, 3);
+  }, [books]);
+
   const loadBooks = useCallback(async () => {
     try {
       const res = await fetch(API_URL);
@@ -75,6 +101,10 @@ function App() {
     return () => window.clearTimeout(timerId);
   }, [loadBooks]);
 
+  const moveToStart = () => {
+    setMessage("");
+    setPage("start");
+  };
   const moveToList = () => {
     setListPage(1);
     setMessage("");
@@ -110,12 +140,13 @@ function App() {
   };
 
   const handleCreateBook = async (formData) => {
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date().toISOString();
     const newBook = {
       ...formData,
       coverImageUrl: "",
-      createdAt: today,
-      updatedAt: today,
+      likeCount: 0,
+      createdAt: now,
+      updatedAt: now,
     };
 
     try {
@@ -165,7 +196,7 @@ function App() {
       const savedBook = await res.json();
 
       setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
       );
       setSelectedId(savedBook.id);
       setMessage("도서 정보를 수정했습니다.");
@@ -173,6 +204,37 @@ function App() {
     } catch (error) {
       console.error(error);
       setMessage("도서 수정 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleLikeBook = async (book) => {
+    const currentLikes = book.likeCount || 0;
+
+    try {
+      const res = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ likeCount: currentLikes + 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error("도서 추천에 실패했습니다.");
+      }
+
+      const data = await res.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === data.id ? data : item)),
+      );
+      setSelectedId(data.id);
+
+      setMessage(`${data.title} 도서를 추천했습니다.`);
+      setPage("detail");
+    } catch (error) {
+      console.error(error);
+      setMessage("도서 추천 중 오류가 발생했습니다.");
     }
   };
 
@@ -203,8 +265,7 @@ function App() {
   };
 
   const handleGenerateCover = async ({ book, apiKey, model, quality }) => {
-    const OPENAI_IMAGE_API_URL =
-      "https://api.openai.com/v1/images/generations";
+    const OPENAI_IMAGE_API_URL = "https://api.openai.com/v1/images/generations";
 
     const prompt = `
     다음 도서에 어울리는 책 표지 이미지를 생성해주세요.
@@ -355,35 +416,53 @@ function App() {
     <div className="app">
       {message && <div className="message">{message}</div>}
 
-      {page === "list" && (
-        <BookList
+      {page === "start" && (
+        <StartPage
           books={filteredBooks}
-          search={search}
-          onSearch={setSearch}
-          currentPage={listPage}
-          onPageChange={setListPage}
-          onMoveToStart={moveToList}
+          newBooks={newBooks}
+          popularBooks={popularBooks}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
         />
       )}
 
+      {page === "list" && (
+        <BookList
+          books={filteredBooks}
+          newBooks={newBooks}
+          popularBooks={popularBooks}
+          search={search}
+          onSearch={setSearch}
+          currentPage={listPage}
+          onPageChange={setListPage}
+          onMoveToStart={moveToStart}
+          onMoveToList={moveToList}
+          onMoveToDetail={moveToDetail}
+          onMoveToCreate={moveToCreate}
+          onMoveToAllBooks={() => {
+            alert("전체 도서 페이지는 다른 팀원이 개발 중입니다.");
+          }}
+        />
+      )}
+
       {page === "detail" && (
         <BookDetail
           book={selectedBook}
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveBackToList={moveBackToList}
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
           onDelete={handleDeleteBook}
+          onLikeBook={handleLikeBook}
         />
       )}
 
       {page === "create" && (
         <BookCreate
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onCreate={handleCreateBook}
           onExtractTags={handleExtractTags}
@@ -393,7 +472,7 @@ function App() {
       {page === "update" && (
         <BookUpdate
           book={selectedBook}
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
           onExtractTags={handleExtractTags}
