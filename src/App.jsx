@@ -34,6 +34,19 @@ function App() {
     });
   }, [books, search]);
 
+  const newBooks = useMemo(() => {
+    return [...books]
+      .sort((a, b) => {
+        const dateA = a.createdAt || "";
+        const dateB = b.createdAt || "";
+        if (dateA !== dateB) {
+          return dateB.localeCompare(dateA);
+        }
+        return b.id - a.id;
+      })
+      .slice(0, 4);
+  }, [books]);
+
   const loadBooks = useCallback(async () => {
     try {
       const res = await fetch(API_URL);
@@ -309,6 +322,7 @@ function App() {
       {page === "list" && (
         <BookList
           books={filteredBooks}
+          newBooks={newBooks}
           search={search}
           onSearch={setSearch}
           onMoveToStart={moveToList}
