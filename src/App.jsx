@@ -4,11 +4,11 @@ import BookDetail from "./pages/BookDetail";
 import BookCreate from "./pages/BookCreate";
 import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
-
+import StartPage from "./pages/StartPage";
 const API_URL = "http://localhost:3000/books";
 
 function App() {
-  const [page, setPage] = useState("list");
+  const [page, setPage] = useState("start");
   const [books, setBooks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [search, setSearch] = useState("");
@@ -86,6 +86,10 @@ function App() {
     return () => window.clearTimeout(timerId);
   }, [loadBooks]);
 
+  const moveToStart = () => {
+    setMessage("");
+    setPage("start");
+  };
   const moveToList = () => {
     setMessage("");
     setPage("list");
@@ -326,6 +330,18 @@ function App() {
     <div className="app">
       {message && <div className="message">{message}</div>}
 
+      {page === "start" && (
+        <StartPage
+          books={filteredBooks}
+          newBooks={newBooks}
+          popularBooks={popularBooks}
+          onMoveToStart={moveToStart}
+          onMoveToList={moveToList}
+          onMoveToDetail={moveToDetail}
+          onMoveToCreate={moveToCreate}
+        />
+      )}
+
       {page === "list" && (
         <BookList
           books={filteredBooks}
@@ -333,7 +349,7 @@ function App() {
           popularBooks={popularBooks}
           search={search}
           onSearch={setSearch}
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
@@ -346,7 +362,7 @@ function App() {
       {page === "detail" && (
         <BookDetail
           book={selectedBook}
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
@@ -357,7 +373,7 @@ function App() {
 
       {page === "create" && (
         <BookCreate
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onCreate={handleCreateBook}
         />
@@ -366,7 +382,7 @@ function App() {
       {page === "update" && (
         <BookUpdate
           book={selectedBook}
-          onMoveToStart={moveToList}
+          onMoveToStart={moveToStart}
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
         />

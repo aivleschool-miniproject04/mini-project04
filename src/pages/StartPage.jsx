@@ -1,37 +1,78 @@
 import Header from "../components/Header";
+import NewBooksSection from "../components/NewBooksSection";
+import PopularBooksSection from "../components/PopularBooksSection";
 
-function StartPage({ onMoveToStart, onMoveToList, onMoveToCreate }) {
+function StartPage({
+  newBooks = [],
+  popularBooks = [],
+  onMoveToStart,
+  onMoveToList,
+  onMoveToDetail,
+  onMoveToCreate,
+}) {
   return (
     <>
-      <Header
-        onMoveToStart={onMoveToStart}
-        onMoveToList={onMoveToList}
-        onMoveToCreate={onMoveToCreate}
-      />
+      <Header onMoveToStart={onMoveToStart} />
 
-      <main className="start-page">
-        <section className="hero-box">
-          <h2>AivleBooks에 오신 것을 환영합니다!</h2>
-          <p>
-            누구나 자유롭게 작가가 되어 글을 집필하고, AI를 활용해 도서 표지
-            시안을 만들어볼 수 있는 창작 플랫폼입니다.
-          </p>
+      <main className="book-list-page">
+        <section className="list-hero" aria-label="AivleBooks 소개">
+          <div>
+            <strong>AivleBooks</strong>
+            <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
+          </div>
+        </section>
 
-          <div className="button-row">
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={onMoveToList}
-            >
-              도서 목록 바로가기
-            </button>
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={onMoveToCreate}
-            >
-              새 도서 등록
-            </button>
+        <section className="section-card">
+          <div
+            className="page-title-row"
+            style={{ display: "flex", justifyContent: "flex-end" }}
+          >
+            <div className="list-actions">
+              <button
+                type="button"
+                className="create-button"
+                onClick={onMoveToList}
+              >
+                도서 목록
+              </button>
+
+              <button
+                type="button"
+                className="create-button"
+                onClick={onMoveToCreate}
+              >
+                새 도서 등록
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="main-sections-container"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "48px",
+              marginTop: "32px",
+            }}
+          >
+            <PopularBooksSection
+              popularBooks={popularBooks}
+              onMoveToDetail={onMoveToDetail}
+            />
+
+            <hr
+              style={{
+                border: "0",
+                height: "1px",
+                backgroundColor: "#eaeaea",
+                margin: "0",
+              }}
+            />
+
+            <NewBooksSection
+              newBooks={newBooks}
+              onMoveToDetail={onMoveToDetail}
+            />
           </div>
         </section>
       </main>
