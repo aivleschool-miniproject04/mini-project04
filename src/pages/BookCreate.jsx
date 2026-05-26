@@ -32,9 +32,7 @@ function BookCreate({ onMoveToStart, onMoveToList, onCreate }) {
 
   return (
     <>
-      <Header
-        onMoveToStart={onMoveToStart}
-      />
+      <Header onMoveToStart={onMoveToStart} />
 
       <main className="form-page">
         <section className="section-card form-card">

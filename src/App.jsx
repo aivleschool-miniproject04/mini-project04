@@ -16,7 +16,7 @@ function App() {
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
-    [books, selectedId]
+    [books, selectedId],
   );
 
   const filteredBooks = useMemo(() => {
@@ -171,7 +171,7 @@ function App() {
       const savedBook = await res.json();
 
       setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
       );
       setSelectedId(savedBook.id);
       setMessage("도서 정보를 수정했습니다.");
@@ -179,6 +179,37 @@ function App() {
     } catch (error) {
       console.error(error);
       setMessage("도서 수정 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleLikeBook = async (book) => {
+    const currentLikes = book.likeCount || 0;
+
+    try {
+      const res = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ likeCount: currentLikes + 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error("도서 추천에 실패했습니다.");
+      }
+
+      const data = await res.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === data.id ? data : item)),
+      );
+      setSelectedId(data.id);
+
+      setMessage(`${data.title} 도서를 추천했습니다.`);
+      setPage("detail");
+    } catch (error) {
+      console.error(error);
+      setMessage("도서 추천 중 오류가 발생했습니다.");
     }
   };
 
@@ -208,46 +239,10 @@ function App() {
     }
   };
 
-  const handleLikeBook = async (book) => {
-    const currentLikeCount = book.likeCount || 0;
-    const updatedBook = {
-      ...book,
-      likeCount: currentLikeCount + 1,
-    };
+  const handleGenerateCover = async ({ book, apiKey, model, quality }) => {
+    const OPENAI_IMAGE_API_URL = "https://api.openai.com/v1/images/generations";
 
-    try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          likeCount: updatedBook.likeCount,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("도서 추천 실패");
-      }
-
-      const savedBook = await res.json();
-
-      setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
-      );
-      setSelectedId(savedBook.id);
-      setMessage("도서를 추천했습니다.");
-    } catch (error) {
-      console.error(error);
-      setMessage("도서 추천 중 오류가 발생했습니다.");
-    }
-  };
-
- const handleGenerateCover = async ({ book, apiKey, model, quality }) => {
-  const OPENAI_IMAGE_API_URL =
-    "https://api.openai.com/v1/images/generations";
-
-  const prompt = `
+    const prompt = `
     다음 도서에 어울리는 책 표지 이미지를 생성해주세요.
 
     도서 제목: ${book.title}
@@ -263,70 +258,69 @@ function App() {
     - 글자는 너무 많이 넣지 않기
 `;
 
-  try {
-    setMessage("");
+    try {
+      setMessage("");
 
-    const res = await fetch(OPENAI_IMAGE_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: model,
-        prompt: prompt,
-        n: 1,
-        size: "1024x1536",
-        quality: quality,
-        output_format: "png",
-      }),
-    });
+      const res = await fetch(OPENAI_IMAGE_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          n: 1,
+          size: "1024x1536",
+          quality: quality,
+          output_format: "png",
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.error?.message || "OpenAI 요청 실패");
+      if (!res.ok) {
+        throw new Error(data.error?.message || "OpenAI 요청 실패");
+      }
+
+      const b64Json = data.data?.[0]?.b64_json;
+
+      if (!b64Json) {
+        throw new Error("이미지 데이터가 응답에 없습니다.");
+      }
+
+      const imageSrc = `data:image/png;base64,${b64Json}`;
+
+      const patchRes = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          coverImageUrl: imageSrc,
+          updatedAt: new Date().toISOString().slice(0, 10),
+        }),
+      });
+
+      if (!patchRes.ok) {
+        throw new Error("표지 저장 실패");
+      }
+
+      const savedBook = await patchRes.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
+      );
+
+      setSelectedId(savedBook.id);
+      setMessage("");
+      return savedBook;
+    } catch (error) {
+      console.error(error);
+      setMessage(error.message || "표지 생성 중 오류가 발생했습니다.");
+      alert(error.message || "표지 생성 중 오류가 발생했습니다.");
     }
-
-    const b64Json = data.data?.[0]?.b64_json;
-
-    if (!b64Json) {
-      throw new Error("이미지 데이터가 응답에 없습니다.");
-    }
-
-    const imageSrc = `data:image/png;base64,${b64Json}`;
-
-    const patchRes = await fetch(`${API_URL}/${book.id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        coverImageUrl: imageSrc,
-        updatedAt: new Date().toISOString().slice(0, 10),
-      }),
-    });
-
-    if (!patchRes.ok) {
-      throw new Error("표지 저장 실패");
-    }
-
-    const savedBook = await patchRes.json();
-
-    setBooks((prevBooks) =>
-      prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
-    );
-
-    setSelectedId(savedBook.id);
-    setMessage("");
-    return savedBook;
-  } catch (error) {
-    console.error(error);
-    setMessage(error.message || "표지 생성 중 오류가 발생했습니다.");
-    alert(error.message || "표지 생성 중 오류가 발생했습니다.");
-  }
-};
-  
+  };
 
   return (
     <div className="app">
@@ -354,7 +348,7 @@ function App() {
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
           onDelete={handleDeleteBook}
-          onLike={handleLikeBook}
+          onLikeBook={handleLikeBook}
         />
       )}
 
