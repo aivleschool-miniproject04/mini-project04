@@ -1,5 +1,9 @@
 :root {
-  font: 16px/1.5 Arial, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic",
+  font:
+    16px/1.5 Arial,
+    "Noto Sans KR",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
     sans-serif;
   color: #16324f;
   background: #f3f6f8;
@@ -20,8 +24,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    linear-gradient(180deg, #eef4f8 0%, #f7f9fb 42%, #eef3f7 100%);
+  background: linear-gradient(180deg, #eef4f8 0%, #f7f9fb 42%, #eef3f7 100%);
 }
 
 button,
@@ -382,7 +385,11 @@ img {
   justify-content: space-between;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.16), transparent 36%),
+    radial-gradient(
+      circle at 20% 0%,
+      rgba(255, 255, 255, 0.16),
+      transparent 36%
+    ),
     linear-gradient(160deg, #328270, #163f58);
   color: #ffffff;
 }
@@ -503,6 +510,19 @@ img {
   margin: 0;
   color: #52667a;
   font-size: 14px;
+}
+
+.like-button {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 24px;
+  outline: none;
+}
+.like-button:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
 }
 
 .form-page {

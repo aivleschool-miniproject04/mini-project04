@@ -1,8 +1,7 @@
 import Header from "../components/Header";
 import BookCard from "../components/BookCard";
-
 function BookList({
-  books,
+  books = [],
   search,
   onSearch,
   onMoveToStart,
@@ -12,15 +11,12 @@ function BookList({
 }) {
   return (
     <>
-      <Header
-        onMoveToStart={onMoveToStart}
-        onMoveToList={onMoveToList}
-      />
+      <Header onMoveToStart={onMoveToStart} onMoveToList={onMoveToList} />
 
       <main className="book-list-page">
-        <section className="list-hero" aria-label="걷기가 서재 소개">
+        <section className="list-hero" aria-label="AivleBooks 소개">
           <div>
-            <strong>걷기가 서재</strong>
+            <strong>AivleBooks</strong>
             <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
           </div>
         </section>
@@ -28,7 +24,6 @@ function BookList({
         <section className="section-card">
           <div className="page-title-row">
             <h2>도서 목록</h2>
-
             <div className="list-actions">
               <div className="search-box">
                 <input
