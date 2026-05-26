@@ -23,7 +23,6 @@ function BookForm({ book, onSubmit, onCancel, submitText }) {
 
 
   const handleChange = (e) => {
-    e.preventDefault()
     const { name, value } = e.target;
 
     setFormData({
@@ -34,22 +33,34 @@ function BookForm({ book, onSubmit, onCancel, submitText }) {
 
 
   const handleAddBook = (e) => {
+    e.preventDefault();
     if (!formData.title.trim()) {
       alert("도서 제목을 입력해주세요.");
-      e.preventDefault();
       return;
     } else if (!formData.author.trim()) {
       alert("저자를 입력해주세요.");
-      e.preventDefault();
       return;
     } else if (!formData.publisher.trim()) {
       alert("출판사를 입력해주세요.");
-      e.preventDefault();
       return;
     } else if (!formData.content.trim()) {
       alert("도서 소개를 입력해주세요.");
-      e.preventDefault();
       return;
+    }
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    const formattedDate = `${year}-${month}-${day}`;
+
+    let createdDate = formattedDate;
+    let updatedDate = formattedDate;
+
+    console.log("book: ", book.createdAt);
+    if (book && book.createdAt) {
+      console.log("aaa");
+      createdDate = book.createdAt;
     }
 
     console.log("title: ", formData.title);
@@ -59,8 +70,8 @@ function BookForm({ book, onSubmit, onCancel, submitText }) {
       publisher: formData.publisher,
       content: formData.content,
       imageUrl: "",
-      created: new Date().toLocaleString(),
-      updated: new Date().toLocaleString()
+      createdAt: createdDate,
+      updatedAt: updatedDate
     };
     if (book) {
       newBook.id = book.id;
