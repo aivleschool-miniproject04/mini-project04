@@ -12,6 +12,7 @@ function App() {
   const [books, setBooks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [search, setSearch] = useState("");
+  const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
 
   const selectedBook = useMemo(
@@ -24,12 +25,26 @@ function App() {
 
     if (!keyword) return books;
 
+    if (keyword.startsWith("#")) {
+      const searchTag = keyword.replace(/^#/, "").trim(); // 검색어에서 맨 앞 '#' 제거 (예: "#소설" -> "소설")
+
+      if (!searchTag) return books;
+
+      return books.filter((book) => {
+        if (!book.tags) return false;
+
+        const tagArray = book.tags.toLowerCase().replace(/#/g, "").split(" ");
+        return tagArray.some((tag) => tag.includes(searchTag));
+      });
+    }
+
     return books.filter((book) => {
       return (
         book.title.toLowerCase().includes(keyword) ||
         book.author.toLowerCase().includes(keyword) ||
         book.publisher.toLowerCase().includes(keyword) ||
-        book.content.toLowerCase().includes(keyword)
+        book.content.toLowerCase().includes(keyword) ||
+        book.tags?.toLowerCase().includes(keyword)
       );
     });
   }, [books, search]);
@@ -91,6 +106,12 @@ function App() {
     setPage("start");
   };
   const moveToList = () => {
+    setListPage(1);
+    setMessage("");
+    setPage("list");
+  };
+
+  const moveBackToList = () => {
     setMessage("");
     setPage("list");
   };
@@ -313,7 +334,7 @@ function App() {
       const savedBook = await patchRes.json();
 
       setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
       );
 
       setSelectedId(savedBook.id);
@@ -325,6 +346,71 @@ function App() {
       alert(error.message || "표지 생성 중 오류가 발생했습니다.");
     }
   };
+
+  const handleSaveCoverImage = async (book, imageSrc) => {
+    try {
+      const res = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          coverImageUrl: imageSrc,
+          updatedAt: new Date().toISOString().slice(0, 10),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("표지 저장 실패");
+      }
+
+      const savedBook = await res.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+      );
+
+      setSelectedId(savedBook.id);
+      setMessage("");
+      return savedBook;
+    } catch (error) {
+      console.error(error);
+      setMessage(error.message || "표지 저장 중 오류가 발생했습니다.");
+      alert(error.message || "표지 저장 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleExtractTags = async (content, apiKey) => {
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "너는 도서 키워드 추출기야. 내용을 읽고 가장 중요한 키워드 3개를 #태그 형식의 JSON 배열로만 답해. 예: [\"#로맨스\", \"#성장\", \"#현대물\"]"
+          },
+          { role: "user", content: content }
+        ],
+        temperature: 0.5,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "태그 추출 실패");
+    }
+
+    const tagsArray = JSON.parse(data.choices[0].message.content.trim());
+    return tagsArray.join(" "); // 결과물인 "#태그1 #태그2" 문자열만 반환
+  };
+
 
   return (
     <div className="app">
@@ -349,6 +435,8 @@ function App() {
           popularBooks={popularBooks}
           search={search}
           onSearch={setSearch}
+          currentPage={listPage}
+          onPageChange={setListPage}
           onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
@@ -364,6 +452,7 @@ function App() {
           book={selectedBook}
           onMoveToStart={moveToStart}
           onMoveToList={moveToList}
+          onMoveBackToList={moveBackToList}
           onMoveToUpdate={moveToUpdate}
           onMoveToCoverUpdate={moveToCoverUpdate}
           onDelete={handleDeleteBook}
@@ -376,6 +465,7 @@ function App() {
           onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onCreate={handleCreateBook}
+          onExtractTags={handleExtractTags}
         />
       )}
 
@@ -385,6 +475,7 @@ function App() {
           onMoveToStart={moveToStart}
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
+          onExtractTags={handleExtractTags}
         />
       )}
 
@@ -394,6 +485,7 @@ function App() {
           onMoveToStart={moveToList}
           onMoveToDetail={moveToDetail}
           onGenerateCover={handleGenerateCover}
+          onSaveCoverImage={handleSaveCoverImage}
         />
       )}
     </div>
