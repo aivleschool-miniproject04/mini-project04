@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Header from "../components/Header";
 import CoverPreview from "../components/CoverPreview";
+import CoverImageModal from "../components/CoverImageModal";
 
 function CoverUpdate({
   book,
@@ -11,6 +12,8 @@ function CoverUpdate({
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("gpt-image-2");
   const [quality, setQuality] = useState("medium");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCoverOpen, setIsCoverOpen] = useState(false);
   const previewImage = book?.coverImageUrl || "";
 
   if (!book) {
@@ -27,21 +30,26 @@ function CoverUpdate({
     );
   }
 
-  const handleGenerateCover = async() => {
+  const handleGenerateCover = async () => {
     if (!apiKey.trim()) {
       alert("API Key를 입력해주세요.");
       return;
     }
 
-        try { await onGenerateCover({
-      book,
-      apiKey,
-      model,
-      quality,
-    });
+    setIsGenerating(true);
+
+    try {
+      await onGenerateCover({
+        book,
+        apiKey,
+        model,
+        quality,
+      });
     } catch (error) {
       console.error(error);
       alert(error.message || "표지 생성 중 오류가 발생했습니다.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -63,6 +71,7 @@ function CoverUpdate({
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="sk-proj-xxxxxxxxxxxxxxxx"
+                disabled={isGenerating}
               />
             </div>
 
@@ -72,6 +81,7 @@ function CoverUpdate({
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
+                disabled={isGenerating}
               />
             </div>
 
@@ -80,6 +90,7 @@ function CoverUpdate({
               <select
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
+                disabled={isGenerating}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -90,10 +101,10 @@ function CoverUpdate({
             <div className="cover-buttons">
               <button
                 type="button"
-                disabled={!apiKey.trim()}
+                disabled={!apiKey.trim() || isGenerating}
                 onClick={handleGenerateCover}
               >
-                AI 표지 생성
+                {isGenerating ? "표지 생성중" : "AI 표지 생성"}
               </button>
 
               <button type="button" onClick={() => onMoveToDetail(book)}>
@@ -103,8 +114,15 @@ function CoverUpdate({
           </div>
 
           <div className="section-card cover-result-area">
-            <CoverPreview imageUrl={previewImage}
-              onClick={() => onMoveToDetail(book)} />
+            <CoverPreview
+              imageUrl={previewImage}
+              isLoading={isGenerating}
+              onClick={() => {
+                if (previewImage) {
+                  setIsCoverOpen(true);
+                }
+              }}
+            />
 
             <div className="cover-book-info">
               <h3>{book.title}</h3>
@@ -114,6 +132,14 @@ function CoverUpdate({
             </div>
           </div>
         </section>
+
+        {isCoverOpen && previewImage && (
+          <CoverImageModal
+            imageUrl={previewImage}
+            title={book.title}
+            onClose={() => setIsCoverOpen(false)}
+          />
+        )}
       </main>
     </>
   );

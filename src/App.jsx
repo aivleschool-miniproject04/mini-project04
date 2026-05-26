@@ -202,7 +202,7 @@ function App() {
 `;
 
   try {
-    setMessage("AI 표지를 생성하고 있습니다...");
+    setMessage("");
 
     const res = await fetch(OPENAI_IMAGE_API_URL, {
       method: "POST",
@@ -256,8 +256,8 @@ function App() {
     );
 
     setSelectedId(savedBook.id);
-    setMessage("AI 표지를 생성했습니다.");
-    setPage("detail");
+    setMessage("");
+    return savedBook;
   } catch (error) {
     console.error(error);
     setMessage(error.message || "표지 생성 중 오류가 발생했습니다.");

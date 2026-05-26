@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Header from "../components/Header";
+import CoverImageModal from "../components/CoverImageModal";
 
 function BookDetail({
   book,
@@ -96,25 +97,11 @@ function BookDetail({
         </section>
 
         {isCoverOpen && book.coverImageUrl && (
-          <div
-            className="cover-modal-backdrop"
-            onClick={() => setIsCoverOpen(false)}
-          >
-            <div
-              className="cover-modal-content"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                className="cover-modal-close"
-                onClick={() => setIsCoverOpen(false)}
-              >
-                ×
-              </button>
-
-              <img src={book.coverImageUrl} alt={`${book.title} 표지 크게 보기`} />
-            </div>
-          </div>
+          <CoverImageModal
+            imageUrl={book.coverImageUrl}
+            title={book.title}
+            onClose={() => setIsCoverOpen(false)}
+          />
         )}
       </main>
     </>
