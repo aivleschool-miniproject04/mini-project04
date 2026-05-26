@@ -23,9 +23,9 @@ function BookList({
       />
 
       <main className="book-list-page">
-        <section className="list-hero" aria-label="걷기가 서재 소개">
+        <section className="list-hero" aria-label="AivleBooks 소개">
           <div>
-            <strong>걷기가 서재</strong>
+            <strong>AivleBooks</strong>
             <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
           </div>
         </section>
