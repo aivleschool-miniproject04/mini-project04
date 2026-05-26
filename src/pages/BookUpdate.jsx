@@ -2,7 +2,12 @@ import { useState } from "react";
 import Header from "../components/Header";
 import BookForm from "../components/BookForm";
 
-function BookUpdate({ book, onMoveToDetail, onMoveToList }) {
+function BookUpdate({
+  book,
+  onMoveToStart,
+  onMoveToDetail,
+  onUpdate,
+}) {
   const [formData, setFormData] = useState({
     title: book?.title || "",
     author: book?.author || "",
@@ -12,14 +17,15 @@ function BookUpdate({ book, onMoveToDetail, onMoveToList }) {
 
   if (!book) {
     return (
-      <div>
-        <Header />
+      <>
+        <Header
+          onMoveToStart={onMoveToStart}
+        />
 
         <main className="form-page">
           <p>수정할 도서 정보가 없습니다.</p>
-          <button onClick={onMoveToList}>목록으로 돌아가기</button>
         </main>
-      </div>
+      </>
     );
   }
 
@@ -35,34 +41,34 @@ function BookUpdate({ book, onMoveToDetail, onMoveToList }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const updatedBook = {
-      ...book,
-      ...formData,
-      updatedAt: new Date().toISOString(),
-    };
+    if (!formData.title.trim() || !formData.author.trim()) {
+      alert("도서 제목과 저자는 필수입니다.");
+      return;
+    }
 
-    alert("도서 수정 UI 확인용입니다. API 연결은 이후 진행합니다.");
-    console.log("수정된 도서 정보:", updatedBook);
-
-    onMoveToDetail(updatedBook);
+    onUpdate(book, formData);
   };
 
   return (
-    <div>
-      <Header />
+    <>
+      <Header
+        onMoveToStart={onMoveToStart}
+      />
 
       <main className="form-page">
-        <h2>등록된 도서 수정</h2>
+        <section className="section-card form-card">
+          <h2>등록된 도서 수정</h2>
 
-        <BookForm
-          formData={formData}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          onCancel={() => onMoveToDetail(book)}
-          submitText="수정하기"
-        />
+          <BookForm
+            formData={formData}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={() => onMoveToDetail(book)}
+            submitText="수정하기"
+          />
+        </section>
       </main>
-    </div>
+    </>
   );
 }
 

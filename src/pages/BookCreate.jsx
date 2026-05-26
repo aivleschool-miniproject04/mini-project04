@@ -2,7 +2,7 @@ import { useState } from "react";
 import Header from "../components/Header";
 import BookForm from "../components/BookForm";
 
-function BookCreate({ onMoveToList }) {
+function BookCreate({ onMoveToStart, onMoveToList, onCreate }) {
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -22,28 +22,34 @@ function BookCreate({ onMoveToList }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    alert("도서 등록 UI 확인용입니다. API 연결은 이후 진행합니다.");
-    console.log("등록할 도서 정보:", formData);
+    if (!formData.title.trim() || !formData.author.trim()) {
+      alert("도서 제목과 저자는 필수입니다.");
+      return;
+    }
 
-    onMoveToList();
+    onCreate(formData);
   };
 
   return (
-    <div>
-      <Header />
+    <>
+      <Header
+        onMoveToStart={onMoveToStart}
+      />
 
       <main className="form-page">
-        <h2>신규 도서 등록</h2>
+        <section className="section-card form-card">
+          <h2>새 도서 등록</h2>
 
-        <BookForm
-          formData={formData}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          onCancel={onMoveToList}
-          submitText="등록하기"
-        />
+          <BookForm
+            formData={formData}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={onMoveToList}
+            submitText="등록하기"
+          />
+        </section>
       </main>
-    </div>
+    </>
   );
 }
 
