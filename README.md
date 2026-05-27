@@ -29,6 +29,11 @@
 - **IMAGE API 연동**: 도서의 제목, 저자, 본문 키워드를 분석하여 IMAGE API를 통해 맞춤형 세로 표지를 디자인합니다.
 - **표지 자동 업데이트**: 생성된 이미지는 Base64 데이터로 변환되어 해당 도서의 정보에 실시간으로 저장 및 렌더링됩니다.
 
+### 5. 다이내믹 AI 추천 헤더 배너 (`Header`)
+![Header 화면](./docs/screenshots/header.png)
+- **자동 슬라이드 배너**: 홈 및 목록 화면 상단에 5초 주기로 자동 전환되는 다이내믹 롤링 배너 영역을 제공합니다.
+- **이 달의 AI 추천 도서**: AI 큐레이션 알고리즘을 거친 추천 도서 정보(`aiRecommendation` 데이터)가 존재할 경우, 추천 도서명과 함께 AI가 추천하는 사유(`reason`)를 배너에 실시간으로 노출합니다.
+
 ---
 
 ## 서비스 흐름도 (Flow Diagram)
@@ -88,7 +93,7 @@ my-app/
 │   │   ├── BookForm.jsx            # 도서 등록/수정 폼 컴포넌트
 │   │   ├── CoverImageModal.jsx     # AI 표지 크게 보기 모달
 │   │   ├── CoverPreview.jsx        # AI 생성 표지 미리보기 및 컨트롤러
-│   │   ├── Header.jsx              # 상단 네비게이션 헤더
+│   │   ├── Header.jsx              # 상단 네비게이션 헤더 및 AI 추천 배너
 │   │   ├── NewBooksSection.jsx     # 신작 도서 3선 영역
 │   │   └── PopularBooksSection.jsx # 인기 도서 3선 영역
 │   ├── pages/              # 주요 레이아웃 페이지 컴포넌트
