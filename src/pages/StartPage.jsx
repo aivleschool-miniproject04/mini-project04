@@ -1,27 +1,16 @@
-import Header from "../components/Header";
 import NewBooksSection from "../components/NewBooksSection";
 import PopularBooksSection from "../components/PopularBooksSection";
 
 function StartPage({
   newBooks = [],
   popularBooks = [],
-  onMoveToStart,
   onMoveToList,
   onMoveToDetail,
   onMoveToCreate,
 }) {
   return (
     <>
-      <Header onMoveToStart={onMoveToStart} />
-
       <main className="book-list-page">
-        <section className="list-hero" aria-label="AivleBooks 소개">
-          <div>
-            <strong>AivleBooks</strong>
-            <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
-          </div>
-        </section>
-
         <section className="section-card">
           <div
             className="page-title-row"
@@ -41,7 +30,16 @@ function StartPage({
                 className="create-button"
                 onClick={onMoveToCreate}
               >
-                새 도서 등록
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                <span>새 도서 등록</span>
               </button>
             </div>
           </div>

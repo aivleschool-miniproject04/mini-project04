@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import Header from "../components/Header";
 import BookCard from "../components/BookCard";
 
 const BOOKS_PER_PAGE = 12;
@@ -8,10 +7,10 @@ function BookList({
   books = [],
   search,
   onSearch,
+  type,
+  onType,
   currentPage,
   onPageChange,
-  onMoveToStart,
-  onMoveToList,
   onMoveToDetail,
   onMoveToCreate,
 }) {
@@ -31,21 +30,24 @@ function BookList({
 
   return (
     <>
-      <Header onMoveToStart={onMoveToStart} onMoveToList={onMoveToList} />
-
       <main className="book-list-page">
-        <section className="list-hero" aria-label="AivleBooks 소개">
-          <div>
-            <strong>AivleBooks</strong>
-            <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
-          </div>
-        </section>
-
         <section className="section-card">
           <div className="page-title-row">
             <h2>도서 목록</h2>
             <div className="list-actions">
               <div className="search-box">
+                <select className="search-type-select" value={type} onChange={(e) => {
+                  onType(e.target.value)
+                }}>
+                  <option value="all">전체</option>
+                  <option value="title">제목</option>
+                  <option value="author">작가</option>
+                  <option value="publisher">출판사</option>
+                  <option value="content">내용</option>
+                  <option value="tag">태그</option>
+                </select>
+
+
                 <input
                   type="text"
                   value={search}
@@ -53,8 +55,8 @@ function BookList({
                   placeholder="도서를 검색해주세요"
                 />
                 <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24">
-                  <path d="m21 21-4.35-4.35" />
-                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2.5" />
+                  <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.5" />
                 </svg>
               </div>
 
@@ -63,7 +65,12 @@ function BookList({
                 className="create-button"
                 onClick={onMoveToCreate}
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                >
                   <path d="M12 5v14" />
                   <path d="M5 12h14" />
                 </svg>
@@ -93,9 +100,13 @@ function BookList({
                       <button
                         key={pageNumber}
                         type="button"
-                        className={pageNumber === safeCurrentPage ? "is-active" : ""}
+                        className={
+                          pageNumber === safeCurrentPage ? "is-active" : ""
+                        }
                         onClick={() => onPageChange(pageNumber)}
-                        aria-current={pageNumber === safeCurrentPage ? "page" : undefined}
+                        aria-current={
+                          pageNumber === safeCurrentPage ? "page" : undefined
+                        }
                       >
                         {pageNumber}
                       </button>

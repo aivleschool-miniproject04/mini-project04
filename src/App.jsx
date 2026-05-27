@@ -5,6 +5,7 @@ import BookCreate from "./pages/BookCreate";
 import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
 import StartPage from "./pages/StartPage";
+import Header from "./components/Header";
 const API_URL = "http://localhost:3000/books";
 
 function App() {
@@ -12,8 +13,10 @@ function App() {
   const [books, setBooks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [search, setSearch] = useState("");
+  const [type, setType] = useState("all"); // 검색 타입
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
+  const [aiRecommendation, setAiRecommendation] = useState(null);
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
@@ -39,28 +42,35 @@ function App() {
     }
 
     return books.filter((book) => {
-      return (
-        book.title.toLowerCase().includes(keyword) ||
-        book.author.toLowerCase().includes(keyword) ||
-        book.publisher.toLowerCase().includes(keyword) ||
-        book.content.toLowerCase().includes(keyword) ||
-        book.tags?.toLowerCase().includes(keyword)
-      );
+      let filtered = {}
+      switch(type){
+        case 'title':
+          filtered = book.title.toLowerCase().includes(keyword);
+          break;
+        case 'author':
+          filtered = book.author.toLowerCase().includes(keyword);
+          break;
+        case 'publisher':
+          filtered = book.publisher.toLowerCase().includes(keyword);
+          break;
+        case 'content':
+          filtered = book.content.toLowerCase().includes(keyword);
+          break;
+        case 'tag':
+          filtered = book.tags?.toLowerCase().includes(keyword)
+          break;
+        default:
+          filtered = (
+            book.title.toLowerCase().includes(keyword) ||
+            book.author.toLowerCase().includes(keyword) ||
+            book.publisher.toLowerCase().includes(keyword) ||
+            book.content.toLowerCase().includes(keyword) ||
+            book.tags?.toLowerCase().includes(keyword)
+          );
+      }
+      return filtered;
     });
-  }, [books, search]);
-
-  const newBooks = useMemo(() => {
-    return [...books]
-      .sort((a, b) => {
-        const dateA = a.createdAt || "";
-        const dateB = b.createdAt || "";
-        if (dateA !== dateB) {
-          return dateB.localeCompare(dateA);
-        }
-        return b.id - a.id;
-      })
-      .slice(0, 3);
-  }, [books]);
+  }, [books, search, type]);
 
   const popularBooks = useMemo(() => {
     return [...books]
@@ -69,6 +79,19 @@ function App() {
         const likeB = b.likeCount || 0;
         if (likeA !== likeB) {
           return likeB - likeA;
+        }
+        return b.id - a.id;
+      })
+      .slice(0, 3);
+  }, [books]);
+
+  const newBooks = useMemo(() => {
+    return [...books]
+      .sort((a, b) => {
+        const dateA = a.createdAt || "";
+        const dateB = b.createdAt || "";
+        if (dateA !== dateB) {
+          return dateB.localeCompare(dateA);
         }
         return b.id - a.id;
       })
@@ -93,6 +116,63 @@ function App() {
     }
   }, []);
 
+  const fetchAIRecommendation = async (books) => {
+    if (books.length === 0) return;
+    const simplifiedBooks = books.map((book) => ({
+      id: book.id,
+      title: book.title,
+      content: book.content,
+    }));
+    const currentMonth = new Date().getMonth() + 1;
+
+    const prompt = `
+    이번달은 ${currentMonth}달이야
+    다음은 우리 도서관의 책 목록이야:
+    ${JSON.stringify(simplifiedBooks)}
+    
+    이 중에서 이번 ${currentMonth}월의 계절감이나 분위기와 가장 잘 어울리는 추천작을 하나 골라줘.
+    결과는 반드시 아래와 같은 순수 JSON 형태로만 응답해. 백틱(\`\`\`)이나 다른 설명은 절대 넣지 마.
+    {"recommendedId": 숫자, "reason": "추천 이유"}
+    `;
+    try {
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
+          }),
+        },
+      );
+      const result = await response.json();
+      const aiData = JSON.parse(result.choices[0].message.content);
+      return aiData;
+    } catch (error) {
+      console.error("AI 추천 실패:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (books.length > 0) {
+      fetchAIRecommendation(books).then((result) => {
+        if (result) {
+          const recommendedBook = books.find(
+            (b) => b.id === result.recommendedId,
+          );
+          setAiRecommendation({
+            ...recommendedBook,
+            reason: result.reason,
+          });
+        }
+      });
+    }
+  }, [books]);
+
   useEffect(() => {
     const timerId = window.setTimeout(() => {
       loadBooks();
@@ -100,6 +180,28 @@ function App() {
 
     return () => window.clearTimeout(timerId);
   }, [loadBooks]);
+
+
+  useEffect(() => {
+    if (!message) return undefined;
+
+    const timerId = window.setTimeout(() => {
+      setMessage("");
+    }, 2200);
+
+    return () => window.clearTimeout(timerId);
+  }, [message]);
+
+
+
+  const showToast = (text) => {
+    setMessage("");
+    window.setTimeout(() => {
+      setMessage(text);
+    }, 0);
+  };
+
+
 
   const moveToStart = () => {
     setMessage("");
@@ -207,7 +309,7 @@ function App() {
     }
   };
 
-  const handleLikeBook = async (book) => {
+    const handleLikeBook = async (book) => {
     const currentLikes = book.likeCount || 0;
 
     try {
@@ -230,7 +332,7 @@ function App() {
       );
       setSelectedId(data.id);
 
-      setMessage(`${data.title} 도서를 추천했습니다.`);
+      showToast(`${data.title} 도서를 추천했습니다.`);
       setPage("detail");
     } catch (error) {
       console.error(error);
@@ -265,9 +367,11 @@ function App() {
   };
 
   const handleGenerateCover = async ({ book, apiKey, model, quality }) => {
-    const OPENAI_IMAGE_API_URL = "https://api.openai.com/v1/images/generations";
+    const OPENAI_IMAGE_API_URL =
+      "https://api.openai.com/v1/images/generations";
 
     const prompt = `
+
     다음 도서에 어울리는 책 표지 이미지를 생성해주세요.
 
     도서 제목: ${book.title}
@@ -281,7 +385,7 @@ function App() {
     - 도서 내용과 어울리는 이미지 중심 디자인
     - 실제 서점에 있을 법한 표지 느낌
     - 글자는 너무 많이 넣지 않기
-`;
+    `;
 
     try {
       setMessage("");
@@ -334,7 +438,7 @@ function App() {
       const savedBook = await patchRes.json();
 
       setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
       );
 
       setSelectedId(savedBook.id);
@@ -367,7 +471,7 @@ function App() {
       const savedBook = await res.json();
 
       setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item))
+        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
       );
 
       setSelectedId(savedBook.id);
@@ -381,7 +485,6 @@ function App() {
   };
 
   const handleExtractTags = async (content, apiKey) => {
-
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -393,9 +496,10 @@ function App() {
         messages: [
           {
             role: "system",
-            content: "너는 도서 키워드 추출기야. 내용을 읽고 가장 중요한 키워드 3개를 #태그 형식의 JSON 배열로만 답해. 예: [\"#로맨스\", \"#성장\", \"#현대물\"]"
+            content:
+              '너는 도서 키워드 추출기야. 내용을 읽고 가장 중요한 키워드 3개를 #태그 형식의 JSON 배열로만 답해. 예: ["#로맨스", "#성장", "#현대물"]',
           },
-          { role: "user", content: content }
+          { role: "user", content: content },
         ],
         temperature: 0.5,
       }),
@@ -411,17 +515,19 @@ function App() {
     return tagsArray.join(" "); // 결과물인 "#태그1 #태그2" 문자열만 반환
   };
 
-
   return (
     <div className="app">
       {message && <div className="message">{message}</div>}
-
+      <Header
+        onMoveToStart={moveToStart}
+        aiRecommendation={aiRecommendation}
+        page={page}
+      />
       {page === "start" && (
         <StartPage
           books={filteredBooks}
           newBooks={newBooks}
           popularBooks={popularBooks}
-          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
@@ -431,26 +537,20 @@ function App() {
       {page === "list" && (
         <BookList
           books={filteredBooks}
-          newBooks={newBooks}
-          popularBooks={popularBooks}
           search={search}
           onSearch={setSearch}
+          type={type}
+          onType={setType}
           currentPage={listPage}
           onPageChange={setListPage}
-          onMoveToStart={moveToStart}
-          onMoveToList={moveToList}
           onMoveToDetail={moveToDetail}
           onMoveToCreate={moveToCreate}
-          onMoveToAllBooks={() => {
-            alert("전체 도서 페이지는 다른 팀원이 개발 중입니다.");
-          }}
         />
       )}
 
       {page === "detail" && (
         <BookDetail
           book={selectedBook}
-          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onMoveBackToList={moveBackToList}
           onMoveToUpdate={moveToUpdate}
@@ -462,7 +562,6 @@ function App() {
 
       {page === "create" && (
         <BookCreate
-          onMoveToStart={moveToStart}
           onMoveToList={moveToList}
           onCreate={handleCreateBook}
           onExtractTags={handleExtractTags}
@@ -472,7 +571,6 @@ function App() {
       {page === "update" && (
         <BookUpdate
           book={selectedBook}
-          onMoveToStart={moveToStart}
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
           onExtractTags={handleExtractTags}
@@ -482,7 +580,6 @@ function App() {
       {page === "coverUpdate" && (
         <CoverUpdate
           book={selectedBook}
-          onMoveToStart={moveToList}
           onMoveToDetail={moveToDetail}
           onGenerateCover={handleGenerateCover}
           onSaveCoverImage={handleSaveCoverImage}
