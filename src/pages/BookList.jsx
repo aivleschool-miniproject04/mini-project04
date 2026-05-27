@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import Header from "../components/Header";
 import BookCard from "../components/BookCard";
 
 const BOOKS_PER_PAGE = 12;
@@ -10,8 +9,6 @@ function BookList({
   onSearch,
   currentPage,
   onPageChange,
-  onMoveToStart,
-  onMoveToList,
   onMoveToDetail,
   onMoveToCreate,
 }) {
@@ -31,16 +28,7 @@ function BookList({
 
   return (
     <>
-      <Header onMoveToStart={onMoveToStart} onMoveToList={onMoveToList} />
-
       <main className="book-list-page">
-        <section className="list-hero" aria-label="AivleBooks 소개">
-          <div>
-            <strong>AivleBooks</strong>
-            <p>글과 AI 표지 시안을 함께 관리하는 창작 서재</p>
-          </div>
-        </section>
-
         <section className="section-card">
           <div className="page-title-row">
             <h2>도서 목록</h2>
@@ -52,7 +40,12 @@ function BookList({
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="도서를 검색해주세요"
                 />
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                >
                   <path d="m21 21-4.35-4.35" />
                   <circle cx="11" cy="11" r="7" />
                 </svg>
@@ -63,7 +56,12 @@ function BookList({
                 className="create-button"
                 onClick={onMoveToCreate}
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                >
                   <path d="M12 5v14" />
                   <path d="M5 12h14" />
                 </svg>
@@ -93,9 +91,13 @@ function BookList({
                       <button
                         key={pageNumber}
                         type="button"
-                        className={pageNumber === safeCurrentPage ? "is-active" : ""}
+                        className={
+                          pageNumber === safeCurrentPage ? "is-active" : ""
+                        }
                         onClick={() => onPageChange(pageNumber)}
-                        aria-current={pageNumber === safeCurrentPage ? "page" : undefined}
+                        aria-current={
+                          pageNumber === safeCurrentPage ? "page" : undefined
+                        }
                       >
                         {pageNumber}
                       </button>

@@ -1,11 +1,9 @@
 import { useState } from "react";
-import Header from "../components/Header";
 import CoverPreview from "../components/CoverPreview";
 import CoverImageModal from "../components/CoverImageModal";
 
 function CoverUpdate({
   book,
-  onMoveToStart,
   onMoveToDetail,
   onGenerateCover,
   onSaveCoverImage,
@@ -20,10 +18,6 @@ function CoverUpdate({
   if (!book) {
     return (
       <>
-        <Header
-          onMoveToStart={onMoveToStart}
-        />
-
         <main className="cover-page">
           <p>표지를 생성할 도서 정보가 없습니다.</p>
         </main>
@@ -78,7 +72,9 @@ function CoverUpdate({
   };
 
   const handleDeleteCoverImage = async () => {
-    const isConfirm = window.confirm("생성된 표지를 삭제하고 기본 이미지로 되돌릴까요?");
+    const isConfirm = window.confirm(
+      "생성된 표지를 삭제하고 기본 이미지로 되돌릴까요?",
+    );
 
     if (!isConfirm) return;
 
@@ -87,10 +83,6 @@ function CoverUpdate({
 
   return (
     <>
-      <Header
-        onMoveToStart={onMoveToStart}
-      />
-
       <main className="cover-page">
         <section className="cover-layout">
           <div className="section-card cover-form-area">
