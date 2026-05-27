@@ -93,7 +93,7 @@ my-app/
 │   │   ├── BookForm.jsx            # 도서 등록/수정 폼 컴포넌트
 │   │   ├── CoverImageModal.jsx     # AI 표지 크게 보기 모달
 │   │   ├── CoverPreview.jsx        # AI 생성 표지 미리보기 및 컨트롤러
-│   │   ├── Header.jsx              # 상단 네비게이션 헤더
+│   │   ├── Header.jsx              # 상단 네비게이션 헤더 및 AI 추천 배너
 │   │   ├── NewBooksSection.jsx     # 신작 도서 3선 영역
 │   │   └── PopularBooksSection.jsx # 인기 도서 3선 영역
 │   ├── pages/              # 주요 레이아웃 페이지 컴포넌트
