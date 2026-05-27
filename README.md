@@ -78,8 +78,11 @@ http://localhost:3000/books API 서버에서 사용하는 리소스 엔드포인
 
 ```text
 my-app/
+├── docs/                   # 프로젝트 문서화 리소스
+│   └── screenshots/        # README.md용 주요 기능 화면 스크린샷 이미지
 ├── public/                 # 정적 리소스 파일
 ├── src/                    # 소스 코드 메인 디렉토리
+│   ├── assets/             # 기본 로고 이미지 등의 정적 파일
 │   ├── components/         # 재사용 가능한 UI 컴포넌트
 │   │   ├── BookCard.jsx            # 도서 카드 목록 컴포넌트
 │   │   ├── BookForm.jsx            # 도서 등록/수정 폼 컴포넌트
