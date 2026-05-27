@@ -12,6 +12,7 @@ function App() {
   const [books, setBooks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [search, setSearch] = useState("");
+  const [type, setType] = useState("all"); // 검색 타입
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
 
@@ -39,15 +40,32 @@ function App() {
     }
 
     return books.filter((book) => {
-      return (
+      let filtered = {}
+      switch(type){
+        case 'title':
+          filtered = book.title.toLowerCase().includes(keyword);
+          break;
+        case 'author':
+          filtered = book.author.toLowerCase().includes(keyword);
+          break;
+        case 'publisher':
+          filtered = book.publisher.toLowerCase().includes(keyword);
+          break;
+        case 'content':
+          filtered = book.content.toLowerCase().includes(keyword);
+          break;
+        default:
+          filtered = (
         book.title.toLowerCase().includes(keyword) ||
         book.author.toLowerCase().includes(keyword) ||
         book.publisher.toLowerCase().includes(keyword) ||
         book.content.toLowerCase().includes(keyword) ||
         book.tags?.toLowerCase().includes(keyword)
       );
+      }
+      return filtered;
     });
-  }, [books, search]);
+  }, [books, search, type]);
 
   const loadBooks = useCallback(async () => {
     try {
@@ -327,6 +345,8 @@ function App() {
           books={filteredBooks}
           search={search}
           onSearch={setSearch}
+          type={type}
+          onType={setType}
           currentPage={listPage}
           onPageChange={setListPage}
           onMoveToStart={moveToList}
