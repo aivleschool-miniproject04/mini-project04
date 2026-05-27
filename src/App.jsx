@@ -56,12 +56,12 @@ function App() {
           break;
         default:
           filtered = (
-        book.title.toLowerCase().includes(keyword) ||
-        book.author.toLowerCase().includes(keyword) ||
-        book.publisher.toLowerCase().includes(keyword) ||
-        book.content.toLowerCase().includes(keyword) ||
-        book.tags?.toLowerCase().includes(keyword)
-      );
+            book.title.toLowerCase().includes(keyword) ||
+            book.author.toLowerCase().includes(keyword) ||
+            book.publisher.toLowerCase().includes(keyword) ||
+            book.content.toLowerCase().includes(keyword) ||
+            book.tags?.toLowerCase().includes(keyword)
+          );
       }
       return filtered;
     });
