@@ -42,13 +42,15 @@ graph TD
     BookList -->|도서 카드 클릭| BookDetail
     BookList -->|새 도서 등록| BookCreate
     BookList -->|로고 클릭| StartPage
+    BookList -->|검색 필터 선택 및 실시간 검색| BookList
+    BookList -->|페이지네이션 이동| BookList
 
     BookDetail -->|수정| BookUpdate[BookUpdate: 도서 수정]
     BookDetail -->|삭제: DELETE /books/:id| BookList
     BookDetail -->|AI 표지 생성| CoverUpdate[CoverUpdate: AI 표지 생성]
 
-    BookUpdate -->|수정 완료: PATCH /books/:id| BookDetail
-    BookCreate -->|등록 완료: POST /books| BookDetail
+    BookUpdate -->|수정 완료 및 태그 갱신: PATCH /books/:id| BookDetail
+    BookCreate -->|등록 완료 및 태그 추출: POST /books| BookDetail
 
     CoverUpdate -->|생성: OpenAI API| OpenAI[OpenAI Image API]
     OpenAI -->|Base64 이미지 반환| CoverUpdate
