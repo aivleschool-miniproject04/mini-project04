@@ -201,36 +201,7 @@ function App() {
     }, 0);
   };
 
-  const handleLikeBook = async (book) => {
-    const currentLikes = book.likeCount || 0;
 
-    try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ likeCount: currentLikes + 1 }),
-      });
-
-      if (!res.ok) {
-        throw new Error("도서 추천에 실패했습니다.");
-      }
-
-      const data = await res.json();
-
-      setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === data.id ? data : item)),
-      );
-      setSelectedId(data.id);
-
-      showToast(`${data.title} 도서를 추천했습니다.`);
-      setPage("detail");
-    } catch (error) {
-      console.error(error);
-      setMessage("도서 추천 중 오류가 발생했습니다.");
-    }
-  };
 
   const moveToStart = () => {
     setMessage("");
@@ -335,6 +306,37 @@ function App() {
     } catch (error) {
       console.error(error);
       setMessage("도서 수정 중 오류가 발생했습니다.");
+    }
+  };
+
+    const handleLikeBook = async (book) => {
+    const currentLikes = book.likeCount || 0;
+
+    try {
+      const res = await fetch(`${API_URL}/${book.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ likeCount: currentLikes + 1 }),
+      });
+
+      if (!res.ok) {
+        throw new Error("도서 추천에 실패했습니다.");
+      }
+
+      const data = await res.json();
+
+      setBooks((prevBooks) =>
+        prevBooks.map((item) => (item.id === data.id ? data : item)),
+      );
+      setSelectedId(data.id);
+
+      showToast(`${data.title} 도서를 추천했습니다.`);
+      setPage("detail");
+    } catch (error) {
+      console.error(error);
+      setMessage("도서 추천 중 오류가 발생했습니다.");
     }
   };
 
