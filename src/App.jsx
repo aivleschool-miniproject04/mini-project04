@@ -240,7 +240,7 @@ function App() {
 
       const savedBook = await res.json();
 
-      setBooks((prevBooks) => [savedBook, ...prevBooks]);
+      setBooks((prevBooks) => [...prevBooks, savedBook]);
       setSelectedId(savedBook.id);
       setMessage("새 도서를 등록했습니다.");
       setPage("detail");
