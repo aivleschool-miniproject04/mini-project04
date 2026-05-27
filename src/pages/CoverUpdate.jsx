@@ -114,8 +114,8 @@ function CoverUpdate({
                 onChange={(e) => setModel(e.target.value)}
                 disabled={isGenerating}
               >
-                <option value="gpt-image-2">gpt-Image-2.0</option>
-                <option value="gpt-image-1.5">gpt-Image-1.5</option>
+                <option value="gpt-image-2">gpt-image-2</option>
+                <option value="gpt-image-1.5">gpt-image-1.5</option>
               </select>
             </div>
 
