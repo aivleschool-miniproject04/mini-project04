@@ -101,6 +101,23 @@ function App() {
     return () => window.clearTimeout(timerId);
   }, [loadBooks]);
 
+  useEffect(() => {
+    if (!message) return undefined;
+
+    const timerId = window.setTimeout(() => {
+      setMessage("");
+    }, 2200);
+
+    return () => window.clearTimeout(timerId);
+  }, [message]);
+
+  const showToast = (text) => {
+    setMessage("");
+    window.setTimeout(() => {
+      setMessage(text);
+    }, 0);
+  };
+
   const moveToStart = () => {
     setMessage("");
     setPage("start");
@@ -230,7 +247,7 @@ function App() {
       );
       setSelectedId(data.id);
 
-      setMessage(`${data.title} 도서를 추천했습니다.`);
+      showToast(`${data.title} 도서를 추천했습니다.`);
       setPage("detail");
     } catch (error) {
       console.error(error);

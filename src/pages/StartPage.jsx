@@ -41,7 +41,11 @@ function StartPage({
                 className="create-button"
                 onClick={onMoveToCreate}
               >
-                새 도서 등록
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                <span>새 도서 등록</span>
               </button>
             </div>
           </div>
