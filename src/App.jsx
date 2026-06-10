@@ -370,19 +370,24 @@ function App() {
   };
 
   const handleLikeBook = async (book) => {
-    const currentLikes = book.likeCount || 0;
+    if (!currentUser) {
+      setMessage("로그인 후 추천할 수 있습니다.");
+      setPage("login");
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
-        method: "PATCH",
+      const res = await fetch(`${API_URL}/${book.id}/like`, {
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
           ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
-        body: JSON.stringify({ likeCount: currentLikes + 1 }),
       });
 
       if (!res.ok) {
+        if (res.status === 409) {
+          throw new Error("이미 추천한 도서입니다.");
+        }
         throw new Error("도서 추천에 실패했습니다.");
       }
 
@@ -397,7 +402,7 @@ function App() {
       setPage("detail");
     } catch (error) {
       console.error(error);
-      setMessage("도서 추천 중 오류가 발생했습니다.");
+      setMessage(error.message || "도서 추천 중 오류가 발생했습니다.");
     }
   };
 
@@ -600,6 +605,7 @@ function App() {
           onMoveToCoverUpdate={moveToCoverUpdate}
           onDelete={handleDeleteBook}
           onLikeBook={handleLikeBook}
+          currentUser={currentUser}
         />
       )}
 

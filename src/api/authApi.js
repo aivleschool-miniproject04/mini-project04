@@ -21,7 +21,9 @@ const normalizeAuthResponse = (data, fallbackUserId) => {
   return {
     accessToken: payload.accessToken || payload.token || "",
     user: {
+      id: user.id || user.userId || fallbackUserId,
       userId: user.userId || user.loginId || fallbackUserId || user.id,
+      loginId: user.loginId || user.userId || fallbackUserId || "",
       name: user.name || "",
       email: user.email || "",
       nickname:
@@ -76,6 +78,7 @@ export const signup = ({ userId, password, name, email, nickname }) => {
     loginId: userId,
     password,
     name: name || nickname,
+    nickname,
   };
 
   return requestAuth("/signup", signupBody, () =>
