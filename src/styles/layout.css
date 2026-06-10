@@ -423,10 +423,17 @@ img {
 }
 
 .search-type-select {
+  appearance: none;
+  -webkit-appearance: none;
   height: 100%;
   border: none;
-  background: #f8fafc;
-  padding: 0 16px 0 18px;
+  background:
+    linear-gradient(45deg, transparent 50%, #14375c 50%) right 24px center /
+      7px 7px no-repeat,
+    linear-gradient(135deg, #14375c 50%, transparent 50%) right 18px center /
+      7px 7px no-repeat,
+    #f8fafc;
+  padding: 0 42px 0 18px;
   font-size: 0.95rem;
   color: #16324f;
   border-right: 1px solid #e5e7eb;
@@ -436,7 +443,12 @@ img {
 }
 
 .search-type-select:focus {
-  background: #edf5f4;
+  background:
+    linear-gradient(45deg, transparent 50%, #14375c 50%) right 24px center /
+      7px 7px no-repeat,
+    linear-gradient(135deg, #14375c 50%, transparent 50%) right 18px center /
+      7px 7px no-repeat,
+    #f8fafc;
 }
 
 .search-box input {
@@ -444,7 +456,7 @@ img {
   height: 100%;
   border: none;
   outline: none;
-  padding: 0 74px 0 16px;
+  padding: 0 44px 0 16px;
   font-size: 1.02rem;
   background: transparent;
 }

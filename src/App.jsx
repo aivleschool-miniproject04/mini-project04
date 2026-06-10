@@ -381,10 +381,14 @@ function App() {
 
     try {
       const res = await fetch(`${API_URL}/${book.id}/like`, {
-        method: "POST",
+        method: "PATCH",
         headers: {
+          "Content-Type": "application/json",
           ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
+        body: JSON.stringify({
+          userId: currentUser.userId,
+        }),
       });
 
       if (!res.ok) {
