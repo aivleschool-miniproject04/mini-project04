@@ -213,6 +213,9 @@ function App() {
   };
 
   const moveToStart = () => {
+    setSearch("");
+    setType("all");
+    setListPage(1);
     setMessage("");
     setPage("start");
   };
@@ -587,6 +590,10 @@ function App() {
           books={filteredBooks}
           search={search}
           onSearch={setSearch}
+          onClearSearch={() => {
+            setSearch("");
+            setListPage(1);
+          }}
           type={type}
           onType={setType}
           currentPage={listPage}
