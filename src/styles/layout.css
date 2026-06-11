@@ -358,6 +358,88 @@ img {
   box-shadow: 0 14px 34px rgba(16, 50, 79, 0.09);
 }
 
+.hero-slider-container {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.hero-banner {
+  width: 100%;
+  height: 160px;
+  text-align: left;
+}
+
+button.hero-banner {
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.recommendation-banner {
+  border-color: #dbe7ef;
+  color: #ffffff;
+}
+
+.recommendation-banner:hover {
+  transform: translateY(-2px);
+  border-color: #b9d7d3;
+  box-shadow: 0 16px 30px rgba(16, 50, 79, 0.12);
+}
+
+.recommendation-banner-loading {
+  cursor: default;
+}
+
+.recommendation-banner-loading:hover {
+  transform: none;
+  border-color: #dbe7ef;
+  box-shadow: 0 14px 34px rgba(16, 50, 79, 0.09);
+}
+
+.recommendation-title-mark {
+  color: #9eeadf;
+  text-shadow: 0 2px 14px rgba(16, 50, 79, 0.22);
+}
+
+.recommendation-book-title {
+  margin-top: 8px !important;
+  font-weight: 800;
+}
+
+.recommendation-reason {
+  max-width: 860px;
+  margin-top: 4px !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+  font-size: 0.95rem;
+}
+
+.hero-banner-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-banner-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.hero-banner-dot.is-active {
+  background: #9eeadf;
+  box-shadow: 0 0 0 3px rgba(158, 234, 223, 0.22);
+}
+
 .list-hero strong {
   display: block;
   margin-bottom: 8px;
@@ -955,7 +1037,7 @@ img {
   padding: 8px 6px;
   border: 1px solid #e3d7ff;
   border-radius: 10px;
-  background: #faf7ff;
+  background: #ffffff;
   color: #7b61ff;
   font-size: 12px;
   font-weight: 800;
@@ -971,8 +1053,25 @@ img {
 .like-button:hover {
   transform: translateY(-1px);
   border-color: #cdbdff;
-  background: #f1ebff;
+  background: #ffffff;
   box-shadow: 0 10px 20px rgba(123, 97, 255, 0.16);
+}
+
+.like-button.is-liked {
+  border-color: #7b61ff;
+  background: #ffffff;
+  color: #5a3fd6;
+  box-shadow:
+    0 0 0 2px rgba(82, 102, 122, 0.08),
+    0 6px 12px rgba(82, 102, 122, 0.14);
+}
+
+.like-button.is-liked:hover {
+  border-color: #674de0;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 3px rgba(82, 102, 122, 0.1),
+    0 7px 14px rgba(82, 102, 122, 0.16);
 }
 
 .like-button svg {
@@ -981,6 +1080,24 @@ img {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.like-button.is-liked svg path:last-child {
+  fill: currentColor;
+}
+
+.like-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.like-button.is-liked span::before {
+  content: "✓";
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 @keyframes toast-fade {

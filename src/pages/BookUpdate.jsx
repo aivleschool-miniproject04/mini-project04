@@ -54,6 +54,7 @@ function BookUpdate({ book, onMoveToDetail, onUpdate, onExtractTags }) {
             submitText="수정하기"
             cancelClassName="danger-button"
             onExtractTags={onExtractTags}
+            authorReadonly
           />
         </section>
       </main>

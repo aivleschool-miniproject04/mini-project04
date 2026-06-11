@@ -15,6 +15,7 @@ import {
   signup as signupUser,
 } from "./api/authApi";
 const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
+const LIKE_STORAGE_PREFIX = "aivlebooks_likes";
 
 const normalizeBooks = (data) => {
   if (Array.isArray(data)) return data;
@@ -32,11 +33,16 @@ function App() {
   const [type, setType] = useState("all");
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
-  const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [toastKey, setToastKey] = useState(0);
+  const [likedBookIds, setLikedBookIds] = useState(() => new Set());
+  const [aiRecommendations, setAiRecommendations] = useState([]);
   const [auth, setAuth] = useState(() => getStoredAuth());
 
   const currentUser = auth?.user || null;
   const authToken = auth?.accessToken || "";
+  const likeStorageKey = currentUser?.userId
+    ? `${LIKE_STORAGE_PREFIX}_${currentUser.userId}`
+    : null;
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
@@ -130,24 +136,33 @@ function App() {
     }
   }, []);
 
-  const fetchAIRecommendation = async (books) => {
-    if (books.length === 0) return;
+  const fetchAIRecommendations = async (books) => {
+    if (books.length === 0) return [];
+
     const simplifiedBooks = books.map((book) => ({
       id: book.id,
       title: book.title,
+      author: book.author,
       content: book.content,
+      tags: book.tags,
     }));
     const currentMonth = new Date().getMonth() + 1;
 
     const prompt = `
-    이번달은 ${currentMonth}달이야
-    다음은 우리 도서관의 책 목록이야:
+    지금은 ${currentMonth}월입니다.
+    아래는 우리 도서관에 등록된 책 목록입니다:
     ${JSON.stringify(simplifiedBooks)}
-    
-    이 중에서 이번 ${currentMonth}월의 계절감이나 분위기와 가장 잘 어울리는 추천작을 하나 골라줘.
-    결과는 반드시 아래와 같은 순수 JSON 형태로만 응답해. 백틱(\`\`\`)이나 다른 설명은 절대 넣지 마.
-    {"recommendedId": 숫자, "reason": "추천 이유"}
+
+    이번 달 분위기, 계절감, 책의 제목과 소개를 함께 고려해서 서로 다른 추천 도서 2권을 골라주세요.
+    reason은 홈 배너에 바로 노출되는 짧은 카피입니다. 35~55자 정도의 자연스러운 한 문장으로 작성하고,
+    따옴표, 이모지, 마크다운, 책 제목 반복 없이 책의 매력을 부드럽게 설명해주세요.
+    응답은 반드시 아래와 같은 순수 JSON 배열만 반환해주세요.
+    [
+      {"recommendedId": 숫자, "reason": "배너용 추천 문구"},
+      {"recommendedId": 숫자, "reason": "배너용 추천 문구"}
+    ]
     `;
+
     try {
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
@@ -164,29 +179,37 @@ function App() {
         },
       );
       const result = await response.json();
-      const aiData = JSON.parse(result.choices[0].message.content);
-      return aiData;
+      const content = result.choices[0].message.content.trim();
+      const aiData = JSON.parse(content);
+      return Array.isArray(aiData) ? aiData : [aiData];
     } catch (error) {
       console.error("AI 추천 실패:", error);
+      return [];
     }
   };
-
   useEffect(() => {
     if (books.length > 0) {
-      fetchAIRecommendation(books).then((result) => {
-        if (result) {
-          const recommendedBook = books.find(
-            (b) => b.id === result.recommendedId,
-          );
-          setAiRecommendation({
-            ...recommendedBook,
-            reason: result.reason,
-          });
-        }
+      fetchAIRecommendations(books).then((results) => {
+        const nextRecommendations = results
+          .map((result) => {
+            const recommendedBook = books.find(
+              (book) => book.id === result.recommendedId,
+            );
+
+            if (!recommendedBook) return null;
+
+            return {
+              ...recommendedBook,
+              reason: result.reason,
+            };
+          })
+          .filter(Boolean)
+          .slice(0, 2);
+
+        setAiRecommendations(nextRecommendations);
       });
     }
   }, [books]);
-
   useEffect(() => {
     const timerId = window.setTimeout(() => {
       loadBooks();
@@ -196,6 +219,20 @@ function App() {
   }, [loadBooks]);
 
   useEffect(() => {
+    if (!likeStorageKey) {
+      setLikedBookIds(new Set());
+      return;
+    }
+
+    try {
+      const savedIds = JSON.parse(window.localStorage.getItem(likeStorageKey) || "[]");
+      setLikedBookIds(new Set(savedIds));
+    } catch {
+      setLikedBookIds(new Set());
+    }
+  }, [likeStorageKey]);
+
+  useEffect(() => {
     if (!message) return undefined;
 
     const timerId = window.setTimeout(() => {
@@ -203,13 +240,11 @@ function App() {
     }, 2200);
 
     return () => window.clearTimeout(timerId);
-  }, [message]);
+  }, [message, toastKey]);
 
   const showToast = (text) => {
-    setMessage("");
-    window.setTimeout(() => {
-      setMessage(text);
-    }, 0);
+    setToastKey((prevKey) => prevKey + 1);
+    setMessage(text);
   };
 
   const moveToStart = () => {
@@ -371,10 +406,12 @@ function App() {
 
   const handleLikeBook = async (book) => {
     if (!currentUser) {
-      setMessage("로그인 후 추천할 수 있습니다.");
+      showToast("로그인 후 추천할 수 있습니다.");
       setPage("login");
       return;
     }
+
+    const wasLiked = likedBookIds.has(book.id);
 
     try {
       const res = await fetch(`${API_URL}/${book.id}/like`, {
@@ -389,27 +426,48 @@ function App() {
       });
 
       if (!res.ok) {
-        if (res.status === 409) {
-          throw new Error("이미 추천한 도서입니다.");
-        }
-        throw new Error("도서 추천에 실패했습니다.");
+        throw new Error("도서 추천 처리에 실패했습니다.");
       }
 
       const data = await res.json();
+      const previousLikeCount = book.likeCount || 0;
+      const nextLikeCount = data.likeCount || 0;
+      const isCanceled =
+        nextLikeCount < previousLikeCount ||
+        (nextLikeCount === previousLikeCount && wasLiked);
+      const nextLikedBookIds = new Set(likedBookIds);
+
+      if (isCanceled) {
+        nextLikedBookIds.delete(data.id);
+      } else {
+        nextLikedBookIds.add(data.id);
+      }
+
+      setLikedBookIds(nextLikedBookIds);
+
+      if (likeStorageKey) {
+        window.localStorage.setItem(
+          likeStorageKey,
+          JSON.stringify([...nextLikedBookIds]),
+        );
+      }
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === data.id ? data : item)),
       );
       setSelectedId(data.id);
 
-      showToast(`${data.title} 도서를 추천했습니다.`);
+      showToast(
+        isCanceled
+          ? `${data.title} 추천이 취소되었습니다.`
+          : `${data.title} 도서를 추천했습니다.`,
+      );
       setPage("detail");
     } catch (error) {
       console.error(error);
-      setMessage(error.message || "도서 추천 중 오류가 발생했습니다.");
+      showToast(error.message || "도서 추천 중 오류가 발생했습니다.");
     }
   };
-
   const handleDeleteBook = async (book) => {
     const isConfirm = window.confirm("선택한 도서를 삭제할까요?");
 
@@ -565,15 +623,16 @@ function App() {
 
   return (
     <div className="app">
-      {message && <div className="message">{message}</div>}
+      {message && <div key={toastKey} className="message">{message}</div>}
       <Header
         onMoveToStart={moveToStart}
-        aiRecommendation={aiRecommendation}
+        aiRecommendations={aiRecommendations}
         page={page}
         currentUser={currentUser}
         onMoveToLogin={moveToLogin}
         onMoveToSignup={moveToSignup}
         onLogout={handleLogout}
+        onMoveToDetail={moveToDetail}
       />
       {page === "start" && (
         <StartPage
@@ -614,6 +673,7 @@ function App() {
           onDelete={handleDeleteBook}
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
+          isLiked={selectedBook ? likedBookIds.has(selectedBook.id) : false}
         />
       )}
 

@@ -10,6 +10,7 @@ function BookDetail({
   onDelete,
   onLikeBook,
   currentUser,
+  isLiked = false,
 }) {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const hasCoverImage = Boolean(book?.coverImageUrl);
@@ -156,8 +157,9 @@ function BookDetail({
               {isLoggedIn && (
                 <button
                   type="button"
-                  className="like-button"
+                  className={`like-button ${isLiked ? "is-liked" : ""}`}
                   onClick={() => onLikeBook(book)}
+                  aria-pressed={isLiked}
                   aria-label={`${book.title} 도서 추천하기`}
                 >
                   <svg
