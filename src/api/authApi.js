@@ -69,14 +69,20 @@ export const login = ({ userId, password }) => {
 };
  
 export const signup = ({ userId, password, name, email, nickname }) => {
-  if (!userId?.trim() || !password?.trim() || !nickname?.trim() || !email?.trim()) {
-    throw new Error("아이디, 비밀번호, 닉네임, 이메일을 입력해주세요.");
+  if (
+    !userId?.trim() ||
+    !password?.trim() ||
+    !nickname?.trim() ||
+    !name?.trim() ||
+    !email?.trim()
+  ) {
+    throw new Error("아이디, 비밀번호, 닉네임, 이름, 이메일을 입력해주세요.");
   }
  
   const signupBody = {
     userId,
     password,
-    name: name || nickname,
+    name,
     email,
     nickname,
   };
