@@ -299,7 +299,6 @@ function App() {
   };
 
   const handleCreateBook = async (formData) => {
-    const now = new Date().toISOString();
     const authorName =
       currentUser?.nickname || currentUser?.name || currentUser?.userId || formData.author;
     const newBook = {
@@ -308,8 +307,6 @@ function App() {
       userId: currentUser?.userId,
       coverImageUrl: "",
       likeCount: 0,
-      createdAt: now,
-      updatedAt: now,
     };
 
     try {
