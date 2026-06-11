@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BookForm from "../components/BookForm";
 
 const getAuthorName = (user) => user?.nickname || user?.name || user?.userId || "";
@@ -6,18 +6,17 @@ const getAuthorName = (user) => user?.nickname || user?.name || user?.userId || 
 function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
   const [formData, setFormData] = useState({
     title: "",
-    author: getAuthorName(currentUser),
+    author: "",
     publisher: "",
     content: "",
     tags: "",
   });
 
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      author: getAuthorName(currentUser),
-    }));
-  }, [currentUser]);
+  const authorName = getAuthorName(currentUser);
+  const formDataWithAuthor = {
+    ...formData,
+    author: authorName,
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,12 +30,12 @@ function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.author.trim()) {
+    if (!formData.title.trim() || !formDataWithAuthor.author.trim()) {
       alert("도서 제목과 저자는 필수입니다.");
       return;
     }
 
-    onCreate(formData);
+    onCreate(formDataWithAuthor);
   };
 
   return (
@@ -45,7 +44,7 @@ function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
         <h2>새 도서 등록</h2>
 
         <BookForm
-          formData={formData}
+          formData={formDataWithAuthor}
           onChange={handleChange}
           onSubmit={handleSubmit}
           onCancel={onMoveToList}

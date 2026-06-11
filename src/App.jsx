@@ -24,6 +24,26 @@ const normalizeBooks = (data) => {
   return [];
 };
 
+const getUserKey = (user) =>
+  user?.userId || user?.loginId || user?.id || user?.nickname || "";
+
+const getLikedStorageKey = (userKey) => `aivle-liked-books:${userKey}`;
+
+const loadLikedBookIds = (userKey) => {
+  if (!userKey) return new Set();
+
+  try {
+    const storedValue = localStorage.getItem(getLikedStorageKey(userKey));
+    const storedIds = JSON.parse(storedValue || "[]");
+
+    if (!Array.isArray(storedIds)) return new Set();
+
+    return new Set(storedIds.map(String));
+  } catch {
+    return new Set();
+  }
+};
+
 function App() {
   const [page, setPage] = useState("start");
   const [books, setBooks] = useState([]);
@@ -32,11 +52,16 @@ function App() {
   const [type, setType] = useState("all");
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
+  const [messageKey, setMessageKey] = useState(0);
   const [aiRecommendation, setAiRecommendation] = useState(null);
   const [auth, setAuth] = useState(() => getStoredAuth());
+  const [likedBookIds, setLikedBookIds] = useState(() =>
+    loadLikedBookIds(getUserKey(getStoredAuth()?.user)),
+  );
 
   const currentUser = auth?.user || null;
   const authToken = auth?.accessToken || "";
+  const currentUserKey = getUserKey(currentUser);
 
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
@@ -196,6 +221,15 @@ function App() {
   }, [loadBooks]);
 
   useEffect(() => {
+    if (!currentUserKey) return;
+
+    localStorage.setItem(
+      getLikedStorageKey(currentUserKey),
+      JSON.stringify([...likedBookIds]),
+    );
+  }, [currentUserKey, likedBookIds]);
+
+  useEffect(() => {
     if (!message) return undefined;
 
     const timerId = window.setTimeout(() => {
@@ -203,13 +237,11 @@ function App() {
     }, 2200);
 
     return () => window.clearTimeout(timerId);
-  }, [message]);
+  }, [message, messageKey]);
 
   const showToast = (text) => {
-    setMessage("");
-    window.setTimeout(() => {
-      setMessage(text);
-    }, 0);
+    setMessageKey((prevKey) => prevKey + 1);
+    setMessage(text);
   };
 
   const moveToStart = () => {
@@ -257,6 +289,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
+    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
     setMessage("로그인되었습니다.");
     setPage("start");
   };
@@ -266,6 +299,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
+    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
     setMessage("회원가입이 완료되었습니다.");
     setPage("start");
   };
@@ -273,6 +307,7 @@ function App() {
   const handleLogout = () => {
     clearAuth();
     setAuth(null);
+    setLikedBookIds(new Set());
     setMessage("로그아웃되었습니다.");
 
     if (["create", "update", "coverUpdate"].includes(page)) {
@@ -336,8 +371,11 @@ function App() {
   };
 
   const handleUpdateBook = async (book, formData) => {
+    const authorName =
+      currentUser?.nickname || currentUser?.name || currentUser?.userId || book.author;
     const updatedBook = {
       ...formData,
+      author: authorName,
       updatedAt: new Date().toISOString().slice(0, 10),
     };
 
@@ -376,6 +414,10 @@ function App() {
       return;
     }
 
+    const bookId = String(book.id);
+
+    const wasLiked = likedBookIds.has(bookId);
+
     try {
       const res = await fetch(`${API_URL}/${book.id}/like`, {
         method: "PATCH",
@@ -401,8 +443,23 @@ function App() {
         prevBooks.map((item) => (item.id === data.id ? data : item)),
       );
       setSelectedId(data.id);
+      setLikedBookIds((prevIds) => {
+        const nextIds = new Set(prevIds);
 
-      showToast(`${data.title} 도서를 추천했습니다.`);
+        if (wasLiked) {
+          nextIds.delete(bookId);
+        } else {
+          nextIds.add(bookId);
+        }
+
+        return nextIds;
+      });
+
+      showToast(
+        wasLiked
+          ? `${data.title} 도서 추천을 취소했습니다.`
+          : `${data.title} 도서를 추천했습니다.`,
+      );
       setPage("detail");
     } catch (error) {
       console.error(error);
@@ -565,7 +622,11 @@ function App() {
 
   return (
     <div className="app">
-      {message && <div className="message">{message}</div>}
+      {message && (
+        <div key={messageKey} className="message">
+          {message}
+        </div>
+      )}
       <Header
         onMoveToStart={moveToStart}
         aiRecommendation={aiRecommendation}
@@ -614,6 +675,7 @@ function App() {
           onDelete={handleDeleteBook}
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
+          isLiked={selectedBook ? likedBookIds.has(String(selectedBook.id)) : false}
         />
       )}
 
@@ -654,6 +716,7 @@ function App() {
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
           onExtractTags={handleExtractTags}
+          currentUser={currentUser}
         />
       )}
 
