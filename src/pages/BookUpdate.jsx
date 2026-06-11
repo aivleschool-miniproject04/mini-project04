@@ -1,13 +1,10 @@
 import { useState } from "react";
 import BookForm from "../components/BookForm";
 
-const getAuthorName = (user, fallback) =>
-  user?.nickname || user?.name || user?.userId || fallback || "";
-
 function BookUpdate({ book, onMoveToDetail, onUpdate, onExtractTags, currentUser }) {
   const [formData, setFormData] = useState({
     title: book?.title || "",
-    author: getAuthorName(currentUser, book?.author),
+    author: book?.author?.nickname || "",
     publisher: book?.publisher || "",
     content: book?.content || "",
     tags: book?.tags || "",

@@ -14,20 +14,10 @@ function BookDetail({
 }) {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const hasCoverImage = Boolean(book?.coverImageUrl);
-  const tagList = book.tags ? book.tags.split(" ") : [];
+  const tagList = book?.tags ? book.tags.split(" ") : [];
   const isLoggedIn = Boolean(currentUser);
-  const currentUserNames = [
-    currentUser?.nickname,
-    currentUser?.name,
-    currentUser?.userId,
-    currentUser?.loginId,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).trim());
   const isOwner =
-    isLoggedIn &&
-    book?.author != null &&
-    currentUserNames.includes(String(book.author).trim());
+    isLoggedIn && String(book?.author?.userId) === String(currentUser.userId);
  
   if (!book) {
     return (
@@ -108,7 +98,7 @@ function BookDetail({
               <>
                 <span>BOOK</span>
                 <strong>{book.title}</strong>
-                <em>{book.author}</em>
+                <em>{book.author.nickname}</em>
               </>
             )}
           </div>
@@ -137,7 +127,7 @@ function BookDetail({
                 })}
               </div>
             )}
-            <p>저자: {book.author}</p>
+            <p>저자: {book.author.nickname}</p>
             {book.publisher && <p>출판사: {book.publisher}</p>}
  
             <div className="content-box">

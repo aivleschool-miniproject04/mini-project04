@@ -130,7 +130,7 @@ function Header({
                   ✦ {currentMonth}월의 AI 추천 도서
                 </strong>
                 <p className="recommendation-book-title">
-                  [{activeBanner.book.title}] - {activeBanner.book.author}
+                  [{activeBanner.book.title}] - {activeBanner.book.author.nickname}
                 </p>
                 <p className="recommendation-reason">{activeBanner.book.reason}</p>
               </div>

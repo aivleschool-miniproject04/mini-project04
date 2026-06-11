@@ -12,10 +12,9 @@ function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
     tags: "",
   });
 
-  const authorName = getAuthorName(currentUser);
   const formDataWithAuthor = {
     ...formData,
-    author: authorName,
+    author: getAuthorName(currentUser),
   };
 
   const handleChange = (e) => {
@@ -35,7 +34,14 @@ function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
       return;
     }
 
-    onCreate(formDataWithAuthor);
+    const submitData = {
+      ...formData,
+      author: {
+        userId: currentUser?.userId,
+      },
+    };
+
+    onCreate(submitData);
   };
 
   return (

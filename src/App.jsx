@@ -87,23 +87,25 @@ function App() {
     }
 
     return books.filter((book) => {
+      const author = book.author.nickname;
+
       switch (type) {
         case "title":
-          return book.title.toLowerCase().includes(keyword);
+          return book.title?.toLowerCase().includes(keyword);
         case "author":
-          return book.author.toLowerCase().includes(keyword);
+          return author.toLowerCase().includes(keyword);
         case "publisher":
-          return book.publisher.toLowerCase().includes(keyword);
+          return book.publisher?.toLowerCase().includes(keyword);
         case "content":
-          return book.content.toLowerCase().includes(keyword);
+          return book.content?.toLowerCase().includes(keyword);
         case "tag":
           return book.tags?.toLowerCase().includes(keyword);
         default:
           return (
-            book.title.toLowerCase().includes(keyword) ||
-            book.author.toLowerCase().includes(keyword) ||
-            book.publisher.toLowerCase().includes(keyword) ||
-            book.content.toLowerCase().includes(keyword) ||
+            book.title?.toLowerCase().includes(keyword) ||
+            author.toLowerCase().includes(keyword) ||
+            book.publisher?.toLowerCase().includes(keyword) ||
+            book.content?.toLowerCase().includes(keyword) ||
             book.tags?.toLowerCase().includes(keyword)
           );
       }
@@ -161,7 +163,7 @@ function App() {
     const simplifiedBooks = books.map((book) => ({
       id: book.id,
       title: book.title,
-      author: book.author,
+      author: book.author.nickname,
       content: book.content,
       tags: book.tags,
     }));
@@ -393,12 +395,12 @@ function App() {
   };
 
   const handleCreateBook = async (formData) => {
-    const authorName =
-      currentUser?.nickname || currentUser?.name || currentUser?.userId || formData.author;
+    const authorUserId = currentUser?.userId || formData.author?.userId;
     const newBook = {
       ...formData,
-      author: authorName,
-      userId: currentUser?.userId,
+      author: {
+        userId: authorUserId,
+      },
       coverImageUrl: "",
       likeCount: 0,
     };
@@ -429,11 +431,13 @@ function App() {
   };
 
   const handleUpdateBook = async (book, formData) => {
-    const authorName =
-      currentUser?.nickname || currentUser?.name || currentUser?.userId || book.author;
+    const authorUserId =
+      currentUser?.userId || formData.author?.userId || book.author.userId;
     const updatedBook = {
       ...formData,
-      author: authorName,
+      author: {
+        userId: authorUserId,
+      },
       updatedAt: new Date().toISOString().slice(0, 10),
     };
 
@@ -476,7 +480,7 @@ function App() {
 
     try {
       const res = await authFetch(`${API_URL}/${book.id}/like`, {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -552,7 +556,7 @@ function App() {
     다음 도서에 어울리는 책 표지 이미지를 생성해주세요.
 
     도서 제목: ${book.title}
-    저자: ${book.author}
+    저자: ${book.author.nickname}
     출판사: ${book.publisher || ""}
     도서 내용: ${book.content}
 
