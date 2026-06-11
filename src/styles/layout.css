@@ -1134,12 +1134,32 @@ button.hero-banner {
 }
 
 .form-error {
-  padding: 12px 14px;
-  border: 1px solid #e8b9ae;
-  border-radius: 9px;
-  background: #fff8f5;
-  color: #a33d2d;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 14px 18px;
+  border: 1px solid #f1c4b8;
+  border-left: 4px solid #c95742;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #fff3ef 0%, #fffaf8 100%);
+  color: #9f3525;
   font-weight: 800;
+  box-shadow: 0 10px 24px rgba(162, 61, 45, 0.08);
+}
+
+.form-error::before {
+  content: "!";
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #c95742;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .inline-api-key-row {
@@ -1179,6 +1199,13 @@ button.hero-banner {
 .form-group label {
   color: #24415f;
   font-weight: 700;
+}
+
+.required-label::before {
+  content: "*";
+  margin-right: 4px;
+  color: #c95742;
+  font-weight: 900;
 }
 
 .book-form input,
