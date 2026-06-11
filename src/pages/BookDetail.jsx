@@ -159,6 +159,7 @@ function BookDetail({
                   type="button"
                   className={`like-button ${isLiked ? "is-liked" : ""}`}
                   onClick={() => onLikeBook(book)}
+                  aria-pressed={isLiked}
                   aria-label={`${book.title} ${isLiked ? "추천 취소" : "추천하기"}`}
                 >
                   <svg
