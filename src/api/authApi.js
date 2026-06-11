@@ -6,6 +6,7 @@ const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === "true";
  
 const createMockAuth = ({ userId, name, email, nickname }) => ({
   accessToken: `mock-token-${userId}`,
+  refreshToken: `mock-refresh-token-${userId}`,
   user: {
     userId,
     name: name || userId,
@@ -20,6 +21,7 @@ const normalizeAuthResponse = (data, fallbackUserId) => {
  
   return {
     accessToken: payload.accessToken || payload.token || "",
+    refreshToken: payload.refreshToken || "",
     user: {
       id: user.id || user.userId || fallbackUserId,
       userId: user.userId || user.loginId || fallbackUserId || user.id,
@@ -82,6 +84,28 @@ export const signup = ({ userId, password, name, email, nickname }) => {
   return requestAuth("/register", signupBody, () =>
     createMockAuth({ userId, name, email, nickname }),
   ).then(() => login({ userId, password }));
+};
+
+export const refreshAccessToken = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new Error("리프레시 토큰이 없습니다.");
+  }
+
+  const response = await fetch(`${AUTH_API_URL}/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "토큰 재발급에 실패했습니다.");
+  }
+
+  const data = await response.json();
+  return data?.accessToken || data?.data?.accessToken || "";
 };
  
 export const saveAuth = (auth) => {

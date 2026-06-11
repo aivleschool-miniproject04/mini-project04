@@ -11,6 +11,7 @@ import {
   clearAuth,
   getStoredAuth,
   login as loginUser,
+  refreshAccessToken,
   saveAuth,
   signup as signupUser,
 } from "./api/authApi";
@@ -60,7 +61,6 @@ function App() {
   );
 
   const currentUser = auth?.user || null;
-  const authToken = auth?.accessToken || "";
   const currentUserKey = getUserKey(currentUser);
 
   const selectedBook = useMemo(
@@ -261,6 +261,48 @@ function App() {
     setMessage(text);
   };
 
+  const authFetch = useCallback(
+    async (url, options = {}) => {
+      const createHeaders = (token) => ({
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      });
+
+      let response = await fetch(url, {
+        ...options,
+        headers: createHeaders(auth?.accessToken),
+      });
+
+      if (response.status !== 401 || !auth?.refreshToken) {
+        return response;
+      }
+
+      try {
+        const newAccessToken = await refreshAccessToken(auth.refreshToken);
+        const nextAuth = {
+          ...auth,
+          accessToken: newAccessToken,
+        };
+
+        saveAuth(nextAuth);
+        setAuth(nextAuth);
+
+        response = await fetch(url, {
+          ...options,
+          headers: createHeaders(newAccessToken),
+        });
+
+        return response;
+      } catch (error) {
+        clearAuth();
+        setAuth(null);
+        setLikedBookIds(new Set());
+        throw error;
+      }
+    },
+    [auth],
+  );
+
   const moveToStart = () => {
     setSearch("");
     setType("all");
@@ -362,11 +404,10 @@ function App() {
     };
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await authFetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(newBook),
       });
@@ -397,11 +438,10 @@ function App() {
     };
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
+      const res = await authFetch(`${API_URL}/${book.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(updatedBook),
       });
@@ -435,11 +475,10 @@ function App() {
     const wasLiked = likedBookIds.has(bookId);
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}/like`, {
+      const res = await authFetch(`${API_URL}/${book.id}/like`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify({
           userId: currentUser.userId,
@@ -485,11 +524,8 @@ function App() {
     if (!isConfirm) return;
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
+      const res = await authFetch(`${API_URL}/${book.id}`, {
         method: "DELETE",
-        headers: {
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
       });
 
       if (!res.ok) {
@@ -570,11 +606,10 @@ function App() {
 
   const handleSaveCoverImage = async (book, imageSrc) => {
     try {
-      const res = await fetch(`${API_URL}/${book.id}/cover`, {
+      const res = await authFetch(`${API_URL}/${book.id}/cover`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify({
           coverImageUrl: imageSrc,
