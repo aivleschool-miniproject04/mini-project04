@@ -130,62 +130,27 @@ function App() {
     }
   }, []);
 
-  const fetchAIRecommendation = async (books) => {
-    if (books.length === 0) return;
-    const simplifiedBooks = books.map((book) => ({
-      id: book.id,
-      title: book.title,
-      content: book.content,
-    }));
-    const currentMonth = new Date().getMonth() + 1;
-
-    const prompt = `
-    이번달은 ${currentMonth}달이야
-    다음은 우리 도서관의 책 목록이야:
-    ${JSON.stringify(simplifiedBooks)}
-    
-    이 중에서 이번 ${currentMonth}월의 계절감이나 분위기와 가장 잘 어울리는 추천작을 하나 골라줘.
-    결과는 반드시 아래와 같은 순수 JSON 형태로만 응답해. 백틱(\`\`\`)이나 다른 설명은 절대 넣지 마.
-    {"recommendedId": 숫자, "reason": "추천 이유"}
-    `;
+  const fetchAIRecommendation = async () => {
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
-          }),
-        },
-      );
-      const result = await response.json();
-      const aiData = JSON.parse(result.choices[0].message.content);
-      return aiData;
+      // ⭕ 백엔드가 쟁여둔(캐싱한) 이달의 AI 추천 데이터를 0.01초 만에 긁어옵니다.
+      const response = await fetch("http://localhost:8080/books/ai-recommendation");
+      if (!response.ok) throw new Error("AI 추천 데이터를 가져오지 못했습니다.");
+
+      const aiData = await response.json();
+      return aiData; // 👈 백엔드가 { id, title, content, author, reason ... } 다 묶어서 줍니다!
     } catch (error) {
       console.error("AI 추천 실패:", error);
+      return null;
     }
   };
 
   useEffect(() => {
-    if (books.length > 0) {
-      fetchAIRecommendation(books).then((result) => {
-        if (result) {
-          const recommendedBook = books.find(
-            (b) => b.id === result.recommendedId,
-          );
-          setAiRecommendation({
-            ...recommendedBook,
-            reason: result.reason,
-          });
-        }
-      });
-    }
-  }, [books]);
+    fetchAIRecommendation().then((result) => {
+      if (result) {
+        setAiRecommendation(result);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const timerId = window.setTimeout(() => {
