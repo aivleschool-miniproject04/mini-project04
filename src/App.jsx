@@ -720,6 +720,22 @@ function App() {
 
       saveAuth(nextAuth);
       setAuth(nextAuth);
+      setBooks((prevBooks) =>
+        prevBooks.map((book) => {
+          if (String(book.author?.userId) !== String(nextMyPage.user.userId)) {
+            return book;
+          }
+
+          return normalizeBook({
+            ...book,
+            author: {
+              ...book.author,
+              nickname: nextMyPage.user.nickname,
+              nickName: nextMyPage.user.nickname,
+            },
+          });
+        }),
+      );
       setMessage("프로필 정보가 수정되었습니다.");
       return nextMyPage;
     },
