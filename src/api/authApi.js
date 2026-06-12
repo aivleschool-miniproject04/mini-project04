@@ -113,6 +113,17 @@ export const refreshAccessToken = async (refreshToken) => {
   const data = await response.json();
   return data?.accessToken || data?.data?.accessToken || "";
 };
+
+export const logout = async (authFetch) => {
+  const response = await authFetch(`${AUTH_API_URL}/logout`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "로그아웃 요청에 실패했습니다.");
+  }
+};
  
 export const saveAuth = (auth) => {
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));

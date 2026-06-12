@@ -13,6 +13,7 @@ import {
   getMyPage,
   getStoredAuth,
   login as loginUser,
+  logout as logoutUser,
   refreshAccessToken,
   saveAuth,
   signup as signupUser,
@@ -409,7 +410,15 @@ function App() {
     setPage("start");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      if (auth?.accessToken) {
+        await logoutUser(authFetch);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
     clearAuth();
     setAuth(null);
     setLikedBookIds(new Set());
