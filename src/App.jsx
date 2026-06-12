@@ -20,12 +20,30 @@ import {
 } from "./api/authApi";
 const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
 
+const normalizeBook = (book) => {
+  if (!book) return book;
+
+  const author = book.author || {};
+
+  return {
+    ...book,
+    author: {
+      ...author,
+      nickname:
+        author.nickname || author.nickName || author.name || author.userId || "",
+    },
+  };
+};
+
 const normalizeBooks = (data) => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.content)) return data.content;
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.data?.content)) return data.data.content;
-  return [];
+  let books = [];
+
+  if (Array.isArray(data)) books = data;
+  else if (Array.isArray(data?.content)) books = data.content;
+  else if (Array.isArray(data?.data)) books = data.data;
+  else if (Array.isArray(data?.data?.content)) books = data.data.content;
+
+  return books.map(normalizeBook);
 };
 
 const getUserKey = (user) =>
@@ -432,7 +450,7 @@ function App() {
         throw new Error("도서 등록 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) => [...prevBooks, savedBook]);
       setSelectedId(savedBook.id);
@@ -468,7 +486,7 @@ function App() {
         throw new Error("도서 수정 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
@@ -507,7 +525,7 @@ function App() {
         throw new Error("도서 추천 처리에 실패했습니다.");
       }
 
-      const data = await res.json();
+      const data = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === data.id ? data : item)),
@@ -638,7 +656,7 @@ function App() {
         throw new Error("표지 저장 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
