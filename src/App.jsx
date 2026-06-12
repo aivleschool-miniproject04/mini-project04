@@ -724,6 +724,8 @@ function App() {
       const nextMyPage = await updateMyProfile(authFetch, formData, currentUser);
       const nextAuth = {
         ...auth,
+        accessToken: nextMyPage.accessToken || auth?.accessToken,
+        refreshToken: nextMyPage.refreshToken || auth?.refreshToken,
         user: {
           ...(auth?.user || {}),
           ...nextMyPage.user,

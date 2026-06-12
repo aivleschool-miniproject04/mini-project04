@@ -136,6 +136,8 @@ export const normalizeMyPageResponse = (data, fallbackUser = {}) => {
   const user = payload.user || payload.member || payload.profile || payload;
 
   return {
+    accessToken: payload.accessToken || "",
+    refreshToken: payload.refreshToken || "",
     user: {
       id: user.id || fallbackUser.id || fallbackUser.userId,
       userId: user.userId || user.loginId || fallbackUser.userId || "",

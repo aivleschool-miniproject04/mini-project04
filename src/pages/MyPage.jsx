@@ -5,7 +5,8 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
   const [formData, setFormData] = useState({
     nickname: currentUser?.nickname || "",
     email: currentUser?.email || "",
-    password: "",
+    oldPassword: "",
+    newPassword: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,14 +28,17 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
           setFormData({
             nickname: nextProfile.nickname || "",
             email: nextProfile.email || "",
-            password: "",
+            oldPassword: "",
+            newPassword: "",
           });
         }
       } catch (error) {
         console.error(error);
 
         if (isMounted) {
-          setErrorMessage(error.message || "마이페이지 정보를 불러오지 못했습니다.");
+          setErrorMessage(
+            error.message || "마이페이지 정보를 불러오지 못했습니다.",
+          );
         }
       } finally {
         if (isMounted) {
@@ -66,9 +70,19 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
       nickname: formData.nickname.trim(),
       email: formData.email.trim(),
     };
+    const oldPassword = formData.oldPassword.trim();
+    const newPassword = formData.newPassword.trim();
 
-    if (formData.password.trim()) {
-      updateData.password = formData.password;
+    if (oldPassword || newPassword) {
+      if (!oldPassword || !newPassword) {
+        setErrorMessage(
+          "비밀번호를 변경하려면 현재 비밀번호와 새 비밀번호를 모두 입력해주세요.",
+        );
+        return;
+      }
+
+      updateData.oldPassword = oldPassword;
+      updateData.newPassword = newPassword;
     }
 
     try {
@@ -82,7 +96,8 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
       setFormData({
         nickname: nextProfile.nickname || "",
         email: nextProfile.email || "",
-        password: "",
+        oldPassword: "",
+        newPassword: "",
       });
     } catch (error) {
       console.error(error);
@@ -105,7 +120,9 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
           </button>
         </div>
 
-        {isLoading && <p className="mypage-state">마이페이지 정보를 불러오는 중입니다.</p>}
+        {isLoading && (
+          <p className="mypage-state">마이페이지 정보를 불러오는 중입니다.</p>
+        )}
 
         {!isLoading && errorMessage && (
           <p className="mypage-state is-error">{errorMessage}</p>
@@ -140,7 +157,7 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
                   name="nickname"
                   value={formData.nickname}
                   onChange={handleChange}
-                  placeholder="닉네임을 입력하세요"
+                  placeholder="닉네임을 입력해주세요"
                 />
               </div>
 
@@ -151,7 +168,19 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="이메일을 입력하세요"
+                  placeholder="이메일을 입력해주세요"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>현재 비밀번호</label>
+                <input
+                  type="password"
+                  name="oldPassword"
+                  value={formData.oldPassword}
+                  onChange={handleChange}
+                  placeholder="비밀번호 변경 시 현재 비밀번호를 입력해주세요"
+                  autoComplete="current-password"
                 />
               </div>
 
@@ -159,10 +188,11 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
                 <label>새 비밀번호</label>
                 <input
                   type="password"
-                  name="password"
-                  value={formData.password}
+                  name="newPassword"
+                  value={formData.newPassword}
                   onChange={handleChange}
-                  placeholder="변경할 때만 입력하세요"
+                  placeholder="변경할 새 비밀번호를 입력해주세요"
+                  autoComplete="new-password"
                 />
               </div>
 
