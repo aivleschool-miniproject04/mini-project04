@@ -145,6 +145,42 @@ function App() {
   };
 
   useEffect(() => {
+    const checkLoginValidity = async () => {
+      // 1. 토큰이 없으면 검사 안 함
+      if (!authToken) return;
+
+      try {
+        // 2. 이미 헤더 포맷("Bearer ")이 포함되어 있는지 확인하고 조립
+        const authHeader = authToken.startsWith("Bearer ")
+          ? authToken
+          : `Bearer ${authToken}`;
+
+        // 3. 백엔드에서 100% 존재하는 안전한 도서 조회 API 주소로 토큰을 찔러봅니다.
+        const res = await fetch(API_URL, {
+          headers: {
+            Authorization: authHeader,
+          },
+        });
+
+        // 4. 서버가 정상 응답(200 OK)을 주지 않으면 토큰에 문제가 있는 것임
+        if (!res.ok) {
+          throw new Error("유효하지 않은 토큰 세션입니다.");
+        }
+
+        console.log("✅ 세션 검증 완료: 정상 로그인 상태입니다.");
+
+      } catch (error) {
+        console.warn("🚨 세션 만료 검출: 로그아웃 처리합니다.");
+        clearAuth(); // 로컬 스토리지 청소
+        setAuth(null); // 로그인 상태 해제
+        showToast("세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.");
+      }
+    };
+
+    checkLoginValidity();
+  }, [authToken]);
+
+  useEffect(() => {
     fetchAIRecommendation().then((result) => {
       if (result) {
         setAiRecommendation(result);
