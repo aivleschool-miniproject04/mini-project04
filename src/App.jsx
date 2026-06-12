@@ -38,6 +38,9 @@ function App() {
   const currentUser = auth?.user || null;
   const authToken = auth?.accessToken || "";
 
+  const [comments, setComments] = useState([]);
+  const [sortBy, setSortBy] = useState("likes");
+
   const selectedBook = useMemo(
     () => books.find((book) => book.id === selectedId) || null,
     [books, selectedId],
@@ -179,6 +182,19 @@ function App() {
 
     checkLoginValidity();
   }, [authToken]);
+
+  const fetchComments = async (bookId, currentSort) => {
+    if (!bookId) return;
+    try {
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments?sort=${currentSort}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
+      }
+    } catch (error) {
+      console.error("댓글 조회 오류:", error);
+    }
+  };
 
   useEffect(() => {
     fetchAIRecommendation().then((result) => {
@@ -565,6 +581,64 @@ function App() {
     return tagsArray.join(" "); // 결과물인 "#태그1 #태그2" 문자열만 반환
   };
 
+  const handleCommentSubmit = async (bookId, content) => {
+    try {
+      const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (res.ok) {
+        setSortBy("latest");
+        fetchComments(bookId, "latest");
+        setMessage("댓글을 등록했습니다.");
+        return true;
+      }
+    } catch (error) {
+      console.error("댓글 등록 오류:", error);
+    }
+    return false;
+  };
+
+  const handleCommentDelete = async (bookId, commentId) => {
+    if (!window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) return;
+    try {
+      const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: authHeader },
+      });
+
+      if (res.ok) {
+        fetchComments(bookId, sortBy);
+        setMessage("댓글을 삭제했습니다.");
+      }
+    } catch (error) {
+      console.error("댓글 삭제 오류:", error);
+    }
+  };
+
+  const handleCommentLike = async (bookId, commentId) => {
+    try {
+      const authHeader = authToken?.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments/${commentId}/like`, {
+        method: "POST",
+        headers: { Authorization: authHeader },
+      });
+
+      if (res.ok) {
+        fetchComments(bookId, sortBy);
+      }
+    } catch (error) {
+      console.error("댓글 좋아요 오류:", error);
+    }
+  };
+
   return (
     <div className="app">
       {message && <div className="message">{message}</div>}
@@ -616,6 +690,15 @@ function App() {
           onDelete={handleDeleteBook}
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
+          authToken={authToken}
+
+          comments={comments}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onCommentFetch={fetchComments}
+          onCommentSubmit={handleCommentSubmit}
+          onCommentDelete={handleCommentDelete}
+          onCommentLike={handleCommentLike}
         />
       )}
 
