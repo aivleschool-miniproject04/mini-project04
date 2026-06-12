@@ -11,6 +11,7 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -19,6 +20,7 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
       try {
         setIsLoading(true);
         setErrorMessage("");
+        setLoadErrorMessage("");
 
         const data = await onLoadMyPage();
         const nextProfile = data.user || {};
@@ -36,7 +38,7 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
         console.error(error);
 
         if (isMounted) {
-          setErrorMessage(
+          setLoadErrorMessage(
             error.message || "마이페이지 정보를 불러오지 못했습니다.",
           );
         }
@@ -124,11 +126,11 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
           <p className="mypage-state">마이페이지 정보를 불러오는 중입니다.</p>
         )}
 
-        {!isLoading && errorMessage && (
-          <p className="mypage-state is-error">{errorMessage}</p>
+        {!isLoading && loadErrorMessage && (
+          <p className="mypage-state is-error">{loadErrorMessage}</p>
         )}
 
-        {!isLoading && !errorMessage && (
+        {!isLoading && !loadErrorMessage && (
           <>
             <div className="mypage-user-box">
               <div>
@@ -195,6 +197,8 @@ function MyPage({ currentUser, onMoveToStart, onLoadMyPage, onUpdateProfile }) {
                   autoComplete="new-password"
                 />
               </div>
+
+              {errorMessage && <p className="form-error">{errorMessage}</p>}
 
               <div className="form-buttons">
                 <button type="submit" disabled={isSaving}>
