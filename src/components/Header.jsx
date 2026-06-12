@@ -32,12 +32,6 @@ function Header({
   }, [aiRecommendations, currentMonth]);
 
   useEffect(() => {
-    if (currentBanner >= banners.length) {
-      setCurrentBanner(0);
-    }
-  }, [banners.length, currentBanner]);
-
-  useEffect(() => {
     if (banners.length <= 1) return undefined;
 
     const timer = window.setTimeout(() => {
@@ -47,7 +41,8 @@ function Header({
     return () => window.clearTimeout(timer);
   }, [banners.length, currentBanner]);
 
-  const activeBanner = banners[currentBanner] || banners[0];
+  const safeCurrentBanner = currentBanner < banners.length ? currentBanner : 0;
+  const activeBanner = banners[safeCurrentBanner] || banners[0];
 
   const handleBannerDotClick = (index) => {
     setCurrentBanner(index);
@@ -168,10 +163,10 @@ function Header({
                 <button
                   key={`${banner.type}-${index}`}
                   type="button"
-                  className={`hero-banner-dot ${currentBanner === index ? "is-active" : ""}`}
+                  className={`hero-banner-dot ${safeCurrentBanner === index ? "is-active" : ""}`}
                   onClick={() => handleBannerDotClick(index)}
                   aria-label={banner.label}
-                  aria-current={currentBanner === index}
+                  aria-current={safeCurrentBanner === index}
                 />
               ))}
             </div>

@@ -35,6 +35,18 @@ const normalizeBook = (book) => {
   };
 };
 
+const sortBooksOldestFirst = (bookList) =>
+  [...bookList].sort((a, b) => {
+    const dateA = a.createdAt || "";
+    const dateB = b.createdAt || "";
+
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB);
+    }
+
+    return (a.id || 0) - (b.id || 0);
+  });
+
 const normalizeBooks = (data) => {
   let books = [];
 
@@ -43,7 +55,7 @@ const normalizeBooks = (data) => {
   else if (Array.isArray(data?.data)) books = data.data;
   else if (Array.isArray(data?.data?.content)) books = data.data.content;
 
-  return books.map(normalizeBook);
+  return sortBooksOldestFirst(books.map(normalizeBook));
 };
 
 const getUserKey = (user) =>
