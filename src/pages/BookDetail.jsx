@@ -10,6 +10,7 @@ function BookDetail({
   onDelete,
   onLikeBook,
   currentUser,
+  isLiked = false,
   authToken,
 
   comments,
@@ -22,30 +23,10 @@ function BookDetail({
 }) {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const hasCoverImage = Boolean(book?.coverImageUrl);
-  const tagList = book.tags ? book.tags.split(" ") : [];
+  const tagList = book?.tags ? book.tags.split(" ") : [];
   const isLoggedIn = Boolean(currentUser);
   const isOwner =
-    isLoggedIn &&
-    book?.author != null &&
-    String(book.author.userId) === String(currentUser?.id);
-
-  const [newComment, setNewComment] = useState("");
-
-  useEffect(() => {
-    if (book?.id) {
-      onCommentFetch(book.id, sortBy);
-    }
-  }, [book?.id, sortBy]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-
-    const isSuccess = await onCommentSubmit(book.id, newComment);
-    if (isSuccess) {
-      setNewComment("");
-    }
-  };
+    isLoggedIn && String(book?.author?.userId) === String(currentUser.userId);
 
   if (!book) {
     return (
@@ -175,9 +156,10 @@ function BookDetail({
               {isLoggedIn && (
                 <button
                   type="button"
-                  className="like-button"
+                  className={`like-button ${isLiked ? "is-liked" : ""}`}
                   onClick={() => onLikeBook(book)}
-                  aria-label={`${book.title} 도서 추천하기`}
+                  aria-pressed={isLiked}
+                  aria-label={`${book.title} ${isLiked ? "추천 취소" : "추천하기"}`}
                 >
                   <svg
                     aria-hidden="true"
@@ -188,7 +170,6 @@ function BookDetail({
                     <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                     <path d="M7 11 11 2a3 3 0 0 1 3 3v4h4.4a2.6 2.6 0 0 1 2.5 3.2l-1.7 6.8A4 4 0 0 1 15.3 22H7V11Z" />
                   </svg>
-                  <span>추천하기</span>
                 </button>
               )}
             </div>

@@ -11,6 +11,7 @@ import {
   clearAuth,
   getStoredAuth,
   login as loginUser,
+  refreshAccessToken,
   saveAuth,
   signup as signupUser,
 } from "./api/authApi";
@@ -24,6 +25,26 @@ const normalizeBooks = (data) => {
   return [];
 };
 
+const getUserKey = (user) =>
+  user?.userId || user?.loginId || user?.id || user?.nickname || "";
+
+const getLikedStorageKey = (userKey) => `aivle-liked-books:${userKey}`;
+
+const loadLikedBookIds = (userKey) => {
+  if (!userKey) return new Set();
+
+  try {
+    const storedValue = localStorage.getItem(getLikedStorageKey(userKey));
+    const storedIds = JSON.parse(storedValue || "[]");
+
+    if (!Array.isArray(storedIds)) return new Set();
+
+    return new Set(storedIds.map(String));
+  } catch {
+    return new Set();
+  }
+};
+
 function App() {
   const [page, setPage] = useState("start");
   const [books, setBooks] = useState([]);
@@ -32,10 +53,15 @@ function App() {
   const [type, setType] = useState("all");
   const [listPage, setListPage] = useState(1);
   const [message, setMessage] = useState("");
-  const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [messageKey, setMessageKey] = useState(0);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
   const [auth, setAuth] = useState(() => getStoredAuth());
+  const [likedBookIds, setLikedBookIds] = useState(() =>
+    loadLikedBookIds(getUserKey(getStoredAuth()?.user)),
+  );
 
   const currentUser = auth?.user || null;
+  const currentUserKey = getUserKey(currentUser);
   const authToken = auth?.accessToken || "";
 
   const [comments, setComments] = useState([]);
@@ -65,23 +91,25 @@ function App() {
     }
 
     return books.filter((book) => {
+      const author = book.author.nickname;
+
       switch (type) {
         case "title":
-          return book.title.toLowerCase().includes(keyword);
+          return book.title?.toLowerCase().includes(keyword);
         case "author":
-          return book.author.nickname.toLowerCase().includes(keyword);
+          return author.toLowerCase().includes(keyword);
         case "publisher":
-          return book.publisher.toLowerCase().includes(keyword);
+          return book.publisher?.toLowerCase().includes(keyword);
         case "content":
-          return book.content.toLowerCase().includes(keyword);
+          return book.content?.toLowerCase().includes(keyword);
         case "tag":
           return book.tags?.toLowerCase().includes(keyword);
         default:
           return (
-            book.title.toLowerCase().includes(keyword) ||
-            book.author.nickname.toLowerCase().includes(keyword) ||
-            book.publisher.toLowerCase().includes(keyword) ||
-            book.content.toLowerCase().includes(keyword) ||
+            book.title?.toLowerCase().includes(keyword) ||
+            author.toLowerCase().includes(keyword) ||
+            book.publisher?.toLowerCase().includes(keyword) ||
+            book.content?.toLowerCase().includes(keyword) ||
             book.tags?.toLowerCase().includes(keyword)
           );
       }
@@ -133,77 +161,80 @@ function App() {
     }
   }, []);
 
-  const fetchAIRecommendation = async () => {
-    try {
-      // ⭕ 백엔드가 쟁여둔(캐싱한) 이달의 AI 추천 데이터를 0.01초 만에 긁어옵니다.
-      const response = await fetch("http://localhost:8080/books/ai-recommendation");
-      if (!response.ok) throw new Error("AI 추천 데이터를 가져오지 못했습니다.");
+  const fetchAIRecommendations = async (books) => {
+    if (books.length === 0) return [];
 
-      const aiData = await response.json();
-      return aiData; // 👈 백엔드가 { id, title, content, author, reason ... } 다 묶어서 줍니다!
+    const simplifiedBooks = books.map((book) => ({
+      id: book.id,
+      title: book.title,
+      author: book.author.nickname,
+      content: book.content,
+      tags: book.tags,
+    }));
+    const currentMonth = new Date().getMonth() + 1;
+
+    const prompt = `
+    지금은 ${currentMonth}월입니다.
+    아래는 우리 도서관에 등록된 책 목록입니다:
+    ${JSON.stringify(simplifiedBooks)}
+
+    이번 달 분위기, 계절감, 책의 제목과 소개를 함께 고려해서 서로 다른 추천 도서 2권을 골라주세요.
+    reason은 홈 배너에 바로 노출되는 짧은 카피입니다. 35~55자 정도의 자연스러운 한 문장으로 작성하고,
+    따옴표, 이모지, 마크다운, 책 제목 반복 없이 책의 매력을 부드럽게 설명해주세요.
+    응답은 반드시 아래와 같은 순수 JSON 배열만 반환해주세요.
+    [
+      {"recommendedId": 숫자, "reason": "배너용 추천 문구"},
+      {"recommendedId": 숫자, "reason": "배너용 추천 문구"}
+    ]
+    `;
+
+    try {
+      const response = await fetch(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: prompt }],
+          }),
+        },
+      );
+      const result = await response.json();
+      const content = result.choices[0].message.content.trim();
+      const aiData = JSON.parse(content);
+      return Array.isArray(aiData) ? aiData : [aiData];
     } catch (error) {
       console.error("AI 추천 실패:", error);
-      return null;
+      return [];
     }
   };
-
   useEffect(() => {
-    const checkLoginValidity = async () => {
-      // 1. 토큰이 없으면 검사 안 함
-      if (!authToken) return;
+    if (books.length > 0) {
+      fetchAIRecommendations(books).then((results) => {
+        const nextRecommendations = results
+          .map((result) => {
+            const recommendedBook = books.find(
+              (book) => book.id === result.recommendedId,
+            );
 
-      try {
-        // 2. 이미 헤더 포맷("Bearer ")이 포함되어 있는지 확인하고 조립
-        const authHeader = authToken.startsWith("Bearer ")
-          ? authToken
-          : `Bearer ${authToken}`;
+            if (!recommendedBook) return null;
 
-        // 3. 백엔드에서 100% 존재하는 안전한 도서 조회 API 주소로 토큰을 찔러봅니다.
-        const res = await fetch(API_URL, {
-          headers: {
-            Authorization: authHeader,
-          },
-        });
+            return {
+              ...recommendedBook,
+              reason: result.reason,
+            };
+          })
+          .filter(Boolean)
+          .slice(0, 2);
 
-        // 4. 서버가 정상 응답(200 OK)을 주지 않으면 토큰에 문제가 있는 것임
-        if (!res.ok) {
-          throw new Error("유효하지 않은 토큰 세션입니다.");
-        }
-
-        console.log("✅ 세션 검증 완료: 정상 로그인 상태입니다.");
-
-      } catch (error) {
-        console.warn("🚨 세션 만료 검출: 로그아웃 처리합니다.");
-        clearAuth(); // 로컬 스토리지 청소
-        setAuth(null); // 로그인 상태 해제
-        showToast("세션이 만료되어 로그아웃되었습니다. 다시 로그인해 주세요.");
-      }
-    };
-
-    checkLoginValidity();
-  }, [authToken]);
-
-  const fetchComments = async (bookId, currentSort) => {
-    if (!bookId) return;
-    try {
-      const res = await fetch(`http://localhost:8080/books/${bookId}/comments?sort=${currentSort}`);
-      if (res.ok) {
-        const data = await res.json();
-        setComments(data);
-      }
-    } catch (error) {
-      console.error("댓글 조회 오류:", error);
+        setAiRecommendations(nextRecommendations);
+      });
     }
-  };
-
-  useEffect(() => {
-    fetchAIRecommendation().then((result) => {
-      if (result) {
-        setAiRecommendation(result);
-      }
-    });
-  }, []);
-
+  }, [books]);
   useEffect(() => {
     const timerId = window.setTimeout(() => {
       loadBooks();
@@ -213,6 +244,15 @@ function App() {
   }, [loadBooks]);
 
   useEffect(() => {
+    if (!currentUserKey) return;
+
+    localStorage.setItem(
+      getLikedStorageKey(currentUserKey),
+      JSON.stringify([...likedBookIds]),
+    );
+  }, [currentUserKey, likedBookIds]);
+
+  useEffect(() => {
     if (!message) return undefined;
 
     const timerId = window.setTimeout(() => {
@@ -220,14 +260,54 @@ function App() {
     }, 2200);
 
     return () => window.clearTimeout(timerId);
-  }, [message]);
+  }, [message, messageKey]);
 
   const showToast = (text) => {
-    setMessage("");
-    window.setTimeout(() => {
-      setMessage(text);
-    }, 0);
+    setMessageKey((prevKey) => prevKey + 1);
+    setMessage(text);
   };
+
+  const authFetch = useCallback(
+    async (url, options = {}) => {
+      const createHeaders = (token) => ({
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      });
+
+      let response = await fetch(url, {
+        ...options,
+        headers: createHeaders(auth?.accessToken),
+      });
+
+      if (response.status !== 401 || !auth?.refreshToken) {
+        return response;
+      }
+
+      try {
+        const newAccessToken = await refreshAccessToken(auth.refreshToken);
+        const nextAuth = {
+          ...auth,
+          accessToken: newAccessToken,
+        };
+
+        saveAuth(nextAuth);
+        setAuth(nextAuth);
+
+        response = await fetch(url, {
+          ...options,
+          headers: createHeaders(newAccessToken),
+        });
+
+        return response;
+      } catch (error) {
+        clearAuth();
+        setAuth(null);
+        setLikedBookIds(new Set());
+        throw error;
+      }
+    },
+    [auth],
+  );
 
   const moveToStart = () => {
     setSearch("");
@@ -274,6 +354,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
+    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
     setMessage("로그인되었습니다.");
     setPage("start");
   };
@@ -283,6 +364,7 @@ function App() {
 
     saveAuth(nextAuth);
     setAuth(nextAuth);
+    setLikedBookIds(loadLikedBookIds(getUserKey(nextAuth.user)));
     setMessage("회원가입이 완료되었습니다.");
     setPage("start");
   };
@@ -290,6 +372,7 @@ function App() {
   const handleLogout = () => {
     clearAuth();
     setAuth(null);
+    setLikedBookIds(new Set());
     setMessage("로그아웃되었습니다.");
 
     if (["create", "update", "coverUpdate"].includes(page)) {
@@ -316,25 +399,21 @@ function App() {
   };
 
   const handleCreateBook = async (formData) => {
-    const now = new Date().toISOString();
-    // const authorName =
-    //   currentUser?.nickname || currentUser?.name || currentUser?.userId || formData.author;
+    const authorUserId = currentUser?.userId || formData.author?.userId;
     const newBook = {
       ...formData,
-      // author: authorName,
-      userId: currentUser?.userId,
+      author: {
+        userId: authorUserId,
+      },
       coverImageUrl: "",
       likeCount: 0,
-      createdAt: now,
-      updatedAt: now,
     };
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await authFetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(newBook),
       });
@@ -356,17 +435,21 @@ function App() {
   };
 
   const handleUpdateBook = async (book, formData) => {
+    const authorUserId =
+      currentUser?.userId || formData.author?.userId || book.author.userId;
     const updatedBook = {
       ...formData,
+      author: {
+        userId: authorUserId,
+      },
       updatedAt: new Date().toISOString().slice(0, 10),
     };
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
+      const res = await authFetch(`${API_URL}/${book.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(updatedBook),
       });
@@ -391,26 +474,27 @@ function App() {
 
   const handleLikeBook = async (book) => {
     if (!currentUser) {
-      setMessage("로그인 후 추천할 수 있습니다.");
+      showToast("로그인 후 추천할 수 있습니다.");
       setPage("login");
       return;
     }
 
+    const bookId = String(book.id);
+    const wasLiked = likedBookIds.has(bookId);
+
     try {
-      const res = await fetch(`${API_URL}/${book.id}/like`, {
+      const res = await authFetch(`${API_URL}/${book.id}/like`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
-        body: JSON.stringify({ userId: currentUser.userId }),
+        body: JSON.stringify({
+          userId: currentUser.userId,
+        }),
       });
 
       if (!res.ok) {
-        if (res.status === 409) {
-          throw new Error("이미 추천한 도서입니다.");
-        }
-        throw new Error("도서 추천에 실패했습니다.");
+        throw new Error("도서 추천 처리에 실패했습니다.");
       }
 
       const data = await res.json();
@@ -419,26 +503,37 @@ function App() {
         prevBooks.map((item) => (item.id === data.id ? data : item)),
       );
       setSelectedId(data.id);
+      setLikedBookIds((prevIds) => {
+        const nextIds = new Set(prevIds);
 
-      showToast(`${data.title} 도서를 추천했습니다.`);
+        if (wasLiked) {
+          nextIds.delete(bookId);
+        } else {
+          nextIds.add(bookId);
+        }
+
+        return nextIds;
+      });
+
+      showToast(
+        wasLiked
+          ? `${data.title} 추천이 취소되었습니다.`
+          : `${data.title} 도서를 추천했습니다.`,
+      );
       setPage("detail");
     } catch (error) {
       console.error(error);
-      setMessage(error.message || "도서 추천 중 오류가 발생했습니다.");
+      showToast(error.message || "도서 추천 중 오류가 발생했습니다.");
     }
   };
-
   const handleDeleteBook = async (book) => {
     const isConfirm = window.confirm("선택한 도서를 삭제할까요?");
 
     if (!isConfirm) return;
 
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
+      const res = await authFetch(`${API_URL}/${book.id}`, {
         method: "DELETE",
-        headers: {
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
       });
 
       if (!res.ok) {
@@ -465,7 +560,7 @@ function App() {
     다음 도서에 어울리는 책 표지 이미지를 생성해주세요.
 
     도서 제목: ${book.title}
-    저자: ${book.author}
+    저자: ${book.author.nickname}
     출판사: ${book.publisher || ""}
     도서 내용: ${book.content}
 
@@ -519,11 +614,10 @@ function App() {
 
   const handleSaveCoverImage = async (book, imageSrc) => {
     try {
-      const res = await fetch(`${API_URL}/${book.id}/cover`, {
+      const res = await authFetch(`${API_URL}/${book.id}/cover`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify({
           coverImageUrl: imageSrc,
@@ -641,15 +735,20 @@ function App() {
 
   return (
     <div className="app">
-      {message && <div className="message">{message}</div>}
+      {message && (
+        <div key={messageKey} className="message">
+          {message}
+        </div>
+      )}
       <Header
         onMoveToStart={moveToStart}
-        aiRecommendation={aiRecommendation}
+        aiRecommendations={aiRecommendations}
         page={page}
         currentUser={currentUser}
         onMoveToLogin={moveToLogin}
         onMoveToSignup={moveToSignup}
         onLogout={handleLogout}
+        onMoveToDetail={moveToDetail}
       />
       {page === "start" && (
         <StartPage
@@ -690,6 +789,7 @@ function App() {
           onDelete={handleDeleteBook}
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
+          isLiked={selectedBook ? likedBookIds.has(String(selectedBook.id)) : false}
           authToken={authToken}
 
           comments={comments}
@@ -739,6 +839,7 @@ function App() {
           onMoveToDetail={moveToDetail}
           onUpdate={handleUpdateBook}
           onExtractTags={handleExtractTags}
+          currentUser={currentUser}
         />
       )}
 
