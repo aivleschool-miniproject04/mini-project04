@@ -161,6 +161,19 @@ function App() {
     }
   }, []);
 
+  const fetchComments = async (bookId, currentSort) => {
+    if (!bookId) return;
+    try {
+      const res = await fetch(`http://localhost:8080/books/${bookId}/comments?sort=${currentSort}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
+      }
+    } catch (error) {
+      console.error("댓글 조회 오류:", error);
+    }
+  };
+
   const fetchAIRecommendations = async (books) => {
     if (books.length === 0) return [];
 
@@ -200,6 +213,7 @@ function App() {
           body: JSON.stringify({
             model: "gpt-4o-mini",
             messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" }
           }),
         },
       );

@@ -27,6 +27,24 @@ function BookDetail({
   const isLoggedIn = Boolean(currentUser);
   const isOwner =
     isLoggedIn && String(book?.author?.userId) === String(currentUser.userId);
+  const [newComment, setNewComment] = useState("");
+
+  useEffect(() => {
+    if (book?.id) {
+      onCommentFetch(book.id, sortBy);
+    }
+  }, [book?.id, sortBy, onCommentFetch]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const isSuccess = await onCommentSubmit(book.id, newComment);
+
+    if (isSuccess) {
+      setNewComment("");
+    }
+  };
 
   if (!book) {
     return (
