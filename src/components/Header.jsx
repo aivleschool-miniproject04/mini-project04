@@ -9,6 +9,7 @@ function Header({
   currentUser,
   onMoveToLogin,
   onMoveToSignup,
+  onMoveToMyPage,
   onLogout,
   onMoveToDetail,
 }) {
@@ -82,6 +83,13 @@ function Header({
           {currentUser ? (
             <>
               <span className="user-chip">{currentUser.nickname}</span>
+              <button
+                type="button"
+                className="secondary-btn mypage-button"
+                onClick={onMoveToMyPage}
+              >
+                마이페이지
+              </button>
               <button type="button" className="secondary-btn" onClick={onLogout}>
                 로그아웃
               </button>

@@ -6,14 +6,17 @@ import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
 import StartPage from "./pages/StartPage";
 import AuthPage from "./pages/AuthPage";
+import MyPage from "./pages/MyPage";
 import Header from "./components/Header";
 import {
   clearAuth,
+  getMyPage,
   getStoredAuth,
   login as loginUser,
   refreshAccessToken,
   saveAuth,
   signup as signupUser,
+  updateMyProfile,
 } from "./api/authApi";
 const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
 
@@ -323,6 +326,17 @@ function App() {
     setPage("signup");
   };
 
+  const moveToMyPage = () => {
+    if (!currentUser) {
+      setMessage("로그인 후 마이페이지를 확인할 수 있습니다.");
+      setPage("login");
+      return;
+    }
+
+    setMessage("");
+    setPage("mypage");
+  };
+
   const moveToList = () => {
     setListPage(1);
     setMessage("");
@@ -371,7 +385,7 @@ function App() {
     setLikedBookIds(new Set());
     setMessage("로그아웃되었습니다.");
 
-    if (["create", "update", "coverUpdate"].includes(page)) {
+    if (["create", "update", "coverUpdate", "mypage"].includes(page)) {
       setPage("start");
     }
   };
@@ -671,6 +685,29 @@ function App() {
     return tagsArray.join(" "); // 결과물인 "#태그1 #태그2" 문자열만 반환
   };
 
+  const handleLoadMyPage = useCallback(() => {
+    return getMyPage(authFetch, currentUser);
+  }, [authFetch, currentUser]);
+
+  const handleUpdateMyProfile = useCallback(
+    async (formData) => {
+      const nextMyPage = await updateMyProfile(authFetch, formData, currentUser);
+      const nextAuth = {
+        ...auth,
+        user: {
+          ...(auth?.user || {}),
+          ...nextMyPage.user,
+        },
+      };
+
+      saveAuth(nextAuth);
+      setAuth(nextAuth);
+      setMessage("프로필 정보가 수정되었습니다.");
+      return nextMyPage;
+    },
+    [auth, authFetch, currentUser],
+  );
+
   return (
     <div className="app">
       {message && (
@@ -685,6 +722,7 @@ function App() {
         currentUser={currentUser}
         onMoveToLogin={moveToLogin}
         onMoveToSignup={moveToSignup}
+        onMoveToMyPage={moveToMyPage}
         onLogout={handleLogout}
         onMoveToDetail={moveToDetail}
       />
@@ -759,6 +797,15 @@ function App() {
           onMoveToLogin={moveToLogin}
           onMoveToSignup={moveToSignup}
           onMoveToStart={moveToStart}
+        />
+      )}
+
+      {page === "mypage" && (
+        <MyPage
+          currentUser={currentUser}
+          onMoveToStart={moveToStart}
+          onLoadMyPage={handleLoadMyPage}
+          onUpdateProfile={handleUpdateMyProfile}
         />
       )}
 
